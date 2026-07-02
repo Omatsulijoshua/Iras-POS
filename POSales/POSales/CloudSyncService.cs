@@ -101,6 +101,24 @@ namespace POSales
             json.Append(includeUnsettled
                 ? TableToArrayJson(Query("SELECT c.id, c.transno, c.pcode, p.pdesc, c.price, c.qty, c.disc, c.total, c.sdate, c.cashier FROM tbCart AS c INNER JOIN tbProduct AS p ON p.pcode = c.pcode WHERE c.status = 'Pending' ORDER BY c.sdate DESC, c.id DESC"))
                 : "[]");
+            json.Append(",");
+            json.Append("\"stockIn\":");
+            json.Append(TableToArrayJson(QuerySafe(@"
+                SELECT TOP 200 
+                    s.refno AS ReferenceNo,
+                    s.pcode AS Pcode,
+                    p.pdesc AS Description,
+                    ISNULL(s.qty, 0) AS Qty,
+                    ISNULL(p.price, 0) AS Price,
+                    ISNULL(s.qty, 0) * ISNULL(p.price, 0) AS Amount,
+                    s.sdate AS RecordDate,
+                    s.stockinby AS RecordedBy,
+                    ISNULL(sp.supplier, '') AS Supplier
+                FROM tbStockIn AS s
+                LEFT JOIN tbProduct AS p ON p.pcode = s.pcode
+                LEFT JOIN tbSupplier AS sp ON sp.id = s.supplierid
+                WHERE s.status LIKE 'Done'
+                ORDER BY s.sdate DESC")));
             json.Append("}");
             return json.ToString();
         }

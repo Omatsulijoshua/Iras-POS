@@ -170,6 +170,15 @@ function renderDashboard(data) {
   renderTable("topTable", topSellingFromRows(sales), ["pcode", "pdesc", "qty", "total"]);
   const criticalRows = filterRowsWithoutDates(data.criticalItems || []);
   renderTable("criticalTable", criticalRows, Object.keys(criticalRows[0] || { systemName: "", pcode: "", pdesc: "", qty: "", reorder: "" }));
+
+  const stockIn = filterRowsWithoutDates(data.stockIn || []);
+  const formattedStockIn = stockIn.map(row => ({
+    ...row,
+    Price: money.format(number(row.Price)),
+    Amount: money.format(number(row.Amount)),
+    RecordDate: row.RecordDate ? new Date(row.RecordDate).toLocaleString() : ""
+  }));
+  renderTable("stockInTable", formattedStockIn, ["systemName", "ReferenceNo", "RecordDate", "RecordedBy", "Pcode", "Description", "Price", "Qty", "Amount", "Supplier"]);
 }
 
 function filterRowsWithoutDates(rows) {
@@ -259,3 +268,53 @@ document.getElementById("dateToFilter").value = todayDateStr;
 loadReports();
 loadAdminUsers();
 setInterval(loadReports, 60000);
+
+// Inventory Modal Interactivity
+const modal = document.getElementById("inventoryModal");
+const closeBtn = document.querySelector(".close-modal");
+const searchInput = document.getElementById("inventorySearch");
+
+function openInventoryModal() {
+  modal.style.display = "block";
+  searchInput.value = "";
+  renderInventoryTable();
+  searchInput.focus();
+}
+
+document.getElementById("globalProductCard").addEventListener("click", openInventoryModal);
+document.getElementById("productMetricCard").addEventListener("click", openInventoryModal);
+
+closeBtn.addEventListener("click", () => {
+  modal.style.display = "none";
+});
+
+window.addEventListener("click", (event) => {
+  if (event.target === modal) {
+    modal.style.display = "none";
+  }
+});
+
+searchInput.addEventListener("input", () => {
+  renderInventoryTable();
+});
+
+function renderInventoryTable() {
+  const searchTerm = searchInput.value.toLowerCase();
+  const inventory = filterRowsWithoutDates(latestReport.inventory || []);
+  
+  const filtered = inventory.filter(row => {
+    return (
+      String(row.pcode || "").toLowerCase().includes(searchTerm) ||
+      String(row.pdesc || "").toLowerCase().includes(searchTerm) ||
+      String(row.brand || "").toLowerCase().includes(searchTerm) ||
+      String(row.category || "").toLowerCase().includes(searchTerm)
+    );
+  });
+  
+  const formatted = filtered.map(row => ({
+    ...row,
+    price: money.format(number(row.price))
+  }));
+  
+  renderTable("inventoryTable", formatted, ["systemName", "pcode", "pdesc", "brand", "category", "price", "qty", "reorder"]);
+}

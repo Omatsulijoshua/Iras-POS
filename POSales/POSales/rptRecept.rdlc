@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version='1.0' encoding='utf-8'?>
 <Report xmlns="http://schemas.microsoft.com/sqlserver/reporting/2016/01/reportdefinition" xmlns:rd="http://schemas.microsoft.com/SQLServer/reporting/reportdesigner">
   <AutoRefresh>0</AutoRefresh>
   <DataSources>
@@ -617,7 +617,7 @@
             <Height>0.12in</Height>
             <Width>2.8in</Width>
             <ZIndex>1</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -651,7 +651,7 @@
             <Height>0.12in</Height>
             <Width>2.7in</Width>
             <ZIndex>2</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -685,7 +685,7 @@
             <Height>0.2in</Height>
             <Width>0.7in</Width>
             <ZIndex>3</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -720,7 +720,7 @@
             <Height>0.2in</Height>
             <Width>0.75in</Width>
             <ZIndex>4</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -755,7 +755,7 @@
             <Height>0.22in</Height>
             <Width>0.95in</Width>
             <ZIndex>5</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -788,7 +788,7 @@
             <Height>0.12in</Height>
             <Width>2.8in</Width>
             <ZIndex>6</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -998,7 +998,7 @@
             <Height>0.18in</Height>
             <Width>1.3in</Width>
             <ZIndex>12</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1032,7 +1032,7 @@
             <Height>0.18in</Height>
             <Width>1.3in</Width>
             <ZIndex>13</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1066,7 +1066,7 @@
             <Height>0.18in</Height>
             <Width>1.3in</Width>
             <ZIndex>14</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1102,7 +1102,7 @@
             <Height>0.34in</Height>
             <Width>1.6in</Width>
             <ZIndex>15</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1135,7 +1135,7 @@
             <Height>0.18in</Height>
             <Width>1.15in</Width>
             <ZIndex>16</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1168,7 +1168,7 @@
             <Height>0.18in</Height>
             <Width>1.15in</Width>
             <ZIndex>17</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1201,7 +1201,7 @@
             <Height>0.18in</Height>
             <Width>1.15in</Width>
             <ZIndex>18</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1235,7 +1235,7 @@
             <Height>0.28in</Height>
             <Width>1in</Width>
             <ZIndex>19</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1308,7 +1308,7 @@
             <Height>0.25in</Height>
             <Width>2.7in</Width>
             <ZIndex>21</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1343,7 +1343,7 @@
             <Height>0.22in</Height>
             <Width>2.7in</Width>
             <ZIndex>22</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1376,7 +1376,7 @@
             <Height>0.22in</Height>
             <Width>1.25in</Width>
             <ZIndex>23</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1410,7 +1410,7 @@
             <Height>0.2in</Height>
             <Width>1.35in</Width>
             <ZIndex>24</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1445,7 +1445,7 @@
             <Height>0.2in</Height>
             <Width>1.05in</Width>
             <ZIndex>25</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1493,7 +1493,7 @@
             <Height>0.8in</Height>
             <Width>1.05in</Width>
             <ZIndex>26</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1512,7 +1512,7 @@
             <Height>0.8in</Height>
             <Width>0.8in</Width>
             <ZIndex>27</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1542,7 +1542,7 @@
             <Height>0.2in</Height>
             <Width>1.05in</Width>
             <ZIndex>28</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1561,7 +1561,7 @@
             <Height>0.16in</Height>
             <Width>0.16in</Width>
             <ZIndex>29</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1576,7 +1576,7 @@
             <Height>0.16in</Height>
             <Width>0.16in</Width>
             <ZIndex>30</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1591,7 +1591,7 @@
             <Height>0.16in</Height>
             <Width>0.16in</Width>
             <ZIndex>31</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1620,7 +1620,7 @@
             <Height>0.2in</Height>
             <Width>1.05in</Width>
             <ZIndex>32</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1639,7 +1639,7 @@
             <Height>0.12in</Height>
             <Width>0.12in</Width>
             <ZIndex>33</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1668,7 +1668,7 @@
             <Height>0.16in</Height>
             <Width>0.95in</Width>
             <ZIndex>34</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1701,7 +1701,7 @@
             <Height>0.16in</Height>
             <Width>0.88in</Width>
             <ZIndex>35</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1720,7 +1720,7 @@
             <Height>0.12in</Height>
             <Width>0.12in</Width>
             <ZIndex>36</ZIndex>
-            <Style>
+            <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
               <Border>
                 <Style>None</Style>
               </Border>
@@ -1924,7 +1924,7 @@
               <Height>0.16in</Height>
               <Width>0.08in</Width>
               <ZIndex>6</ZIndex>
-              <Style>
+              <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
                 <Border>
                   <Style>None</Style>
                 </Border>
@@ -1957,7 +1957,7 @@
               <Height>0.16in</Height>
               <Width>0.08in</Width>
               <ZIndex>7</ZIndex>
-              <Style>
+              <Visibility><Hidden>=Parameters!pPaymentType.Value = "Invoice"</Hidden></Visibility><Style>
                 <Border>
                   <Style>None</Style>
                 </Border>

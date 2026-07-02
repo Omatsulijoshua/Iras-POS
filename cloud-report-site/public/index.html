@@ -27,7 +27,7 @@
           <strong id="globalSystemsCount" class="stat-number">0</strong>
         </div>
       </div>
-      <div class="global-stat-card">
+      <div class="global-stat-card" id="globalProductCard" style="cursor: pointer;">
         <div class="stat-icon">📦</div>
         <div class="stat-content">
           <span class="stat-title">Total Products</span>
@@ -68,7 +68,7 @@
       <article><span>Sales Total</span><strong id="salesTotal">0.00</strong></article>
       <article><span>Transactions</span><strong id="transactions">0</strong></article>
       <article><span>Items Sold</span><strong id="itemsSold">0</strong></article>
-      <article><span>Products</span><strong id="productCount">0</strong></article>
+      <article id="productMetricCard" style="cursor: pointer;"><span>Products</span><strong id="productCount">0</strong></article>
       <article><span>Unsettled</span><strong id="unsettledTotal">0.00</strong></article>
     </section>
 
@@ -85,6 +85,11 @@
     <section>
       <h2>Unsettled Payments</h2>
       <div class="table-wrap"><table id="unsettledTable"></table></div>
+    </section>
+
+    <section>
+      <h2>Product Stock Inflow History</h2>
+      <div class="table-wrap"><table id="stockInTable"></table></div>
     </section>
 
     <section class="admin-panel">
@@ -119,6 +124,24 @@
       </div>
     </section>
   </main>
+
+  <!-- Inventory Modal -->
+  <div id="inventoryModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Product Inventory</h2>
+        <span class="close-modal">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="search-bar-wrap">
+          <input type="text" id="inventorySearch" placeholder="Search products by code, description, brand, category...">
+        </div>
+        <div class="table-wrap">
+          <table id="inventoryTable"></table>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <script src="/public/app.js"></script>
 </body>

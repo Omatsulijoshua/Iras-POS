@@ -94,7 +94,8 @@ function aggregateReports(data) {
     criticalItems: snapshots.flatMap((snapshot) => withSystem(snapshot.criticalItems, snapshot)),
     cancelled: snapshots.flatMap((snapshot) => withSystem(snapshot.cancelled, snapshot)),
     soldItems: snapshots.flatMap((snapshot) => withSystem(snapshot.soldItems, snapshot)),
-    topSelling: snapshots.flatMap((snapshot) => withSystem(snapshot.topSelling, snapshot))
+    topSelling: snapshots.flatMap((snapshot) => withSystem(snapshot.topSelling, snapshot)),
+    stockIn: snapshots.flatMap((snapshot) => withSystem(snapshot.stockIn, snapshot))
   };
 }
 

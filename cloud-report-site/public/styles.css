@@ -192,8 +192,8 @@ main {
 /* Dashboard Metric Cards */
 .metrics {
   display: grid;
-  gap: 20px;
-  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   margin-bottom: 32px;
 }
 
@@ -201,7 +201,7 @@ main {
   background: white;
   border: 1px solid #e2e8f0;
   border-radius: 16px;
-  padding: 24px;
+  padding: 16px 20px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.01);
   transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
@@ -223,7 +223,7 @@ main {
 
 .metrics article strong {
   color: #0f172a;
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 800;
 }
 

@@ -43,6 +43,11 @@ namespace POSales
             this.btnSave = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
             this.chkSpecialNote = new System.Windows.Forms.CheckBox();
+            this.lblLogo = new System.Windows.Forms.Label();
+            this.picLogo = new System.Windows.Forms.PictureBox();
+            this.btnUpload = new System.Windows.Forms.Button();
+            this.btnClear = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)(this.picLogo)).BeginInit();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -109,7 +114,7 @@ namespace POSales
             this.btnSave.FlatAppearance.BorderSize = 0;
             this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSave.ForeColor = System.Drawing.Color.White;
-            this.btnSave.Location = new System.Drawing.Point(437, 206);
+            this.btnSave.Location = new System.Drawing.Point(437, 255);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(94, 35);
             this.btnSave.TabIndex = 31;
@@ -124,7 +129,7 @@ namespace POSales
             this.btnCancel.FlatAppearance.BorderSize = 0;
             this.btnCancel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCancel.ForeColor = System.Drawing.Color.Black;
-            this.btnCancel.Location = new System.Drawing.Point(548, 206);
+            this.btnCancel.Location = new System.Drawing.Point(548, 255);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(94, 35);
             this.btnCancel.TabIndex = 32;
@@ -179,13 +184,64 @@ namespace POSales
             this.txtVatPercent.Size = new System.Drawing.Size(122, 26);
             this.txtVatPercent.TabIndex = 36;
             // 
+            // lblLogo
+            // 
+            this.lblLogo.AutoSize = true;
+            this.lblLogo.Location = new System.Drawing.Point(50, 195);
+            this.lblLogo.Name = "lblLogo";
+            this.lblLogo.Size = new System.Drawing.Size(97, 20);
+            this.lblLogo.TabIndex = 38;
+            this.lblLogo.Text = "Store Logo :";
+            // 
+            // picLogo
+            // 
+            this.picLogo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.picLogo.Location = new System.Drawing.Point(169, 195);
+            this.picLogo.Name = "picLogo";
+            this.picLogo.Size = new System.Drawing.Size(100, 80);
+            this.picLogo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.picLogo.TabIndex = 39;
+            this.picLogo.TabStop = false;
+            // 
+            // btnUpload
+            // 
+            this.btnUpload.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(70)))), ((int)(((byte)(160)))));
+            this.btnUpload.FlatAppearance.BorderSize = 0;
+            this.btnUpload.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnUpload.ForeColor = System.Drawing.Color.White;
+            this.btnUpload.Location = new System.Drawing.Point(285, 195);
+            this.btnUpload.Name = "btnUpload";
+            this.btnUpload.Size = new System.Drawing.Size(94, 35);
+            this.btnUpload.TabIndex = 40;
+            this.btnUpload.Text = "Upload";
+            this.btnUpload.UseVisualStyleBackColor = false;
+            this.btnUpload.Click += new System.EventHandler(this.btnUpload_Click);
+            // 
+            // btnClear
+            // 
+            this.btnClear.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(0)))), ((int)(((byte)(70)))), ((int)(((byte)(160)))));
+            this.btnClear.FlatAppearance.BorderSize = 0;
+            this.btnClear.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnClear.ForeColor = System.Drawing.Color.White;
+            this.btnClear.Location = new System.Drawing.Point(395, 195);
+            this.btnClear.Name = "btnClear";
+            this.btnClear.Size = new System.Drawing.Size(94, 35);
+            this.btnClear.TabIndex = 41;
+            this.btnClear.Text = "Clear";
+            this.btnClear.UseVisualStyleBackColor = false;
+            this.btnClear.Click += new System.EventHandler(this.btnClear_Click);
+            // 
             // Store
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.White;
-            this.ClientSize = new System.Drawing.Size(708, 311);
+            this.ClientSize = new System.Drawing.Size(708, 360);
             this.ControlBox = false;
+            this.Controls.Add(this.lblLogo);
+            this.Controls.Add(this.picLogo);
+            this.Controls.Add(this.btnUpload);
+            this.Controls.Add(this.btnClear);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnCancel);
             this.Controls.Add(this.txtStName);
@@ -207,6 +263,7 @@ namespace POSales
             this.Text = "STORE";
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.Store_KeyDown);
             this.panel1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.picLogo)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -227,5 +284,9 @@ namespace POSales
         public System.Windows.Forms.Button btnSave;
         public System.Windows.Forms.Button btnCancel;
         private System.Windows.Forms.CheckBox chkSpecialNote;
+        private System.Windows.Forms.Label lblLogo;
+        private System.Windows.Forms.PictureBox picLogo;
+        public System.Windows.Forms.Button btnUpload;
+        public System.Windows.Forms.Button btnClear;
     }
 }

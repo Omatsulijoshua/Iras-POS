@@ -59,7 +59,7 @@ namespace POSales
             try
             {
                 ReportDataSource rptDS;
-                this.reportViewer1.LocalReport.ReportPath = Application.StartupPath + @"\Reports\rptSoldReport.rdlc";
+                ModernUI.LoadReportWithCustomLogo(this.reportViewer1.LocalReport, Application.StartupPath + @"\Reports\rptSoldReport.rdlc");
                 this.reportViewer1.LocalReport.DataSources.Clear();
 
                 DataSet1 ds = new DataSet1();

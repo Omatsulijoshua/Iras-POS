@@ -30,6 +30,160 @@ namespace POSales
         private static readonly HashSet<Control> StyledControls = new HashSet<Control>();
         private static readonly HashSet<Form> EnhancedForms = new HashSet<Form>();
 
+        private static Image _cachedLogo = null;
+        private static string _cachedStoreName = null;
+
+        public static Image StoreLogo
+        {
+            get
+            {
+                if (_cachedLogo == null)
+                {
+                    _cachedLogo = GetStoreLogoImage();
+                }
+                return _cachedLogo;
+            }
+            set
+            {
+                _cachedLogo = value;
+            }
+        }
+
+        public static string StoreName
+        {
+            get
+            {
+                if (_cachedStoreName == null)
+                {
+                    DBConnect db = new DBConnect();
+                    string dbStoreName = db.getStoreName();
+                    _cachedStoreName = !string.IsNullOrEmpty(dbStoreName) ? dbStoreName : "IRAS SPOT";
+                }
+                return _cachedStoreName;
+            }
+            set
+            {
+                _cachedStoreName = value;
+            }
+        }
+
+        public static Image GetStoreLogoImage()
+        {
+            try
+            {
+                DBConnect db = new DBConnect();
+                byte[] imgBytes = db.getStoreLogo();
+                if (imgBytes != null && imgBytes.Length > 0)
+                {
+                    using (System.IO.MemoryStream ms = new System.IO.MemoryStream(imgBytes))
+                    {
+                        return Image.FromStream(ms);
+                    }
+                }
+            }
+            catch
+            {
+            }
+            return Properties.Resources.WhatsApp_Image_2026_06_01_at_2_12_01_PM;
+        }
+
+        public static void ResetCache()
+        {
+            _cachedLogo = null;
+            _cachedStoreName = null;
+        }
+
+        public static void RefreshBranding()
+        {
+            ResetCache();
+            foreach (Form form in Application.OpenForms)
+            {
+                PictureBox logo = FindControl<PictureBox>(form, "pictureBox1");
+                if (logo != null && (IsSplashLogo(logo) || IsLoginLogo(logo) || IsSidebarLogo(logo)))
+                {
+                    logo.Image = StoreLogo;
+                }
+
+                if (form.Name == "MainForm")
+                {
+                    form.Text = StoreName;
+                }
+                else if (form.Name == "Cashier")
+                {
+                    form.Text = StoreName;
+                }
+                else if (form.Name == "Login")
+                {
+                    Label brand = FindControl<Label>(form, "label1");
+                    if (brand != null)
+                    {
+                        brand.Text = StoreName;
+                    }
+                }
+                else if (form.Name == "Home")
+                {
+                    Label title = FindControl<Label>(form, "label4");
+                    if (title != null)
+                    {
+                        title.Text = StoreName;
+                    }
+                    Label welcome = FindControl<Label>(form, "label2");
+                    if (welcome != null)
+                    {
+                        welcome.Text = "Welcome to " + StoreName;
+                    }
+                }
+            }
+        }
+
+        public static void LoadReportWithCustomLogo(Microsoft.Reporting.WinForms.LocalReport localReport, string rdlcPath)
+        {
+            try
+            {
+                if (System.IO.File.Exists(rdlcPath))
+                {
+                    string rdlcContent = System.IO.File.ReadAllText(rdlcPath);
+                    Image logoImg = StoreLogo;
+                    if (logoImg != null)
+                    {
+                        byte[] logoBytes;
+                        using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
+                        {
+                            using (Bitmap bmp = new Bitmap(logoImg))
+                            {
+                                bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                            }
+                            logoBytes = ms.ToArray();
+                        }
+                        string base64Logo = Convert.ToBase64String(logoBytes);
+                        
+                        System.Text.RegularExpressions.Regex regex = new System.Text.RegularExpressions.Regex(
+                            @"<EmbeddedImage\s+Name=""Logo"">.*?<ImageData>.*?</ImageData>.*?</EmbeddedImage>", 
+                            System.Text.RegularExpressions.RegexOptions.Singleline);
+                            
+                        if (regex.IsMatch(rdlcContent))
+                        {
+                            string newEmbeddedImage = string.Format(
+                                @"<EmbeddedImage Name=""Logo""><MIMEType>image/png</MIMEType><ImageData>{0}</ImageData></EmbeddedImage>", 
+                                base64Logo);
+                            rdlcContent = regex.Replace(rdlcContent, newEmbeddedImage);
+                        }
+                    }
+                    
+                    using (System.IO.StringReader sr = new System.IO.StringReader(rdlcContent))
+                    {
+                        localReport.LoadReportDefinition(sr);
+                    }
+                    return;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error customizing report logo: " + ex.Message);
+            }
+            localReport.ReportPath = rdlcPath;
+        }
+
         public static void ApplyOpenForms()
         {
             foreach (Form form in Application.OpenForms)
@@ -387,7 +541,14 @@ namespace POSales
             if (IsSplashLogo(pictureBox) || IsLoginLogo(pictureBox) || IsSidebarLogo(pictureBox))
             {
                 SetBackColor(pictureBox, Color.Transparent);
-                pictureBox.Image = Properties.Resources.WhatsApp_Image_2026_06_01_at_2_12_01_PM;
+                pictureBox.Image = StoreLogo;
+                pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
+                pictureBox.Visible = true;
+                return;
+            }
+
+            if (pictureBox.Name.Equals("picLogo", StringComparison.OrdinalIgnoreCase))
+            {
                 pictureBox.SizeMode = PictureBoxSizeMode.Zoom;
                 pictureBox.Visible = true;
                 return;
@@ -804,6 +965,7 @@ namespace POSales
 
             if (brand != null)
             {
+                brand.Text = StoreName;
                 brand.Font = new Font("Segoe UI Semibold", 25F, FontStyle.Bold);
                 brand.ForeColor = Accent;
                 brand.AutoSize = true;
@@ -813,6 +975,7 @@ namespace POSales
             if (logo != null)
             {
                 SetBackColor(logo, Color.Transparent);
+                logo.Image = StoreLogo;
                 logo.SizeMode = PictureBoxSizeMode.Zoom;
                 logo.SetBounds(380, 58, 190, 190);
                 logo.Visible = logo.Image != null;
@@ -882,13 +1045,10 @@ namespace POSales
             Panel progress = FindControl<Panel>(form, "panel1");
             Panel progressTrack = FindControl<Panel>(form, "panel2");
             PictureBox logo = FindControl<PictureBox>(form, "pictureBox1");
-            DBConnect dbcon = new DBConnect();
-            string dbStoreName = dbcon.getStoreName();
-            string brandName = !string.IsNullOrEmpty(dbStoreName) ? dbStoreName : "IRAS SPOT";
-
             if (logo != null)
             {
                 SetBackColor(logo, Color.Transparent);
+                logo.Image = StoreLogo;
                 logo.SizeMode = PictureBoxSizeMode.Zoom;
                 logo.SetBounds(302, 74, 238, 210);
                 logo.Visible = true;
@@ -896,7 +1056,7 @@ namespace POSales
 
             if (title != null)
             {
-                title.Text = brandName;
+                title.Text = StoreName;
                 title.Font = new Font("Segoe UI Semibold", 25F, FontStyle.Bold);
                 title.ForeColor = Accent;
                 title.AutoSize = true;
@@ -905,7 +1065,7 @@ namespace POSales
 
             if (welcome != null)
             {
-                welcome.Text = "Welcome to " + brandName;
+                welcome.Text = "Welcome to " + StoreName;
                 welcome.Font = new Font("Segoe UI", 13F, FontStyle.Regular);
                 welcome.ForeColor = Color.FromArgb(214, 224, 235);
                 welcome.AutoSize = true;
@@ -1945,7 +2105,7 @@ namespace POSales
 
             if (logo != null)
             {
-                logo.Image = Properties.Resources.WhatsApp_Image_2026_06_01_at_2_12_01_PM;
+                logo.Image = StoreLogo;
                 logo.Visible = true;
                 logo.SizeMode = PictureBoxSizeMode.Zoom;
                 SetBackColor(logo, Color.Transparent);

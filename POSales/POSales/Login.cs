@@ -38,6 +38,16 @@ namespace POSales
 
         private void btnLogin_Click(object sender, EventArgs e)
         {
+            string licenseReason;
+            if (!POSales.LicenseManager.IsLicenseValid(out licenseReason))
+            {
+                MessageBox.Show(licenseReason, "License Required", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ProductKeyForm pkf = new ProductKeyForm();
+                pkf.Show();
+                this.Hide();
+                return;
+            }
+
             string _username = "", _name = "", _role = "";
             try
             {
@@ -73,6 +83,14 @@ namespace POSales
                         MessageBox.Show("Account is deactivate. Unable to login", "Inactive Account", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                         return;
                     }
+
+                    int daysRemaining;
+                    if (POSales.LicenseManager.IsExpiringSoon(out daysRemaining))
+                    {
+                        MessageBox.Show(string.Format("Warning: Your product license will expire in {0} days.\r\nPlease contact the developer for a new key to avoid service disruption.", daysRemaining), 
+                                        "License Expiry Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+
                     if(_role=="Cashier")
                     {
                         MessageBox.Show("Welcome " + _name + " |", "ACCESS GRANTED", MessageBoxButtons.OK, MessageBoxIcon.Information);

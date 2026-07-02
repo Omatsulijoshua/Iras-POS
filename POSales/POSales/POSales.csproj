@@ -141,6 +141,7 @@
     <Compile Include="DailySale.Designer.cs">
       <DependentUpon>DailySale.cs</DependentUpon>
     </Compile>
+    <Compile Include="CloudSyncService.cs" />
     <Compile Include="Dashboard.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -296,6 +297,16 @@
     <Compile Include="Void.Designer.cs">
       <DependentUpon>Void.cs</DependentUpon>
     </Compile>
+    <Compile Include="LicenseManager.cs" />
+    <Compile Include="ProductKeyForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ProductKeyForm.Designer.cs">
+      <DependentUpon>ProductKeyForm.cs</DependentUpon>
+    </Compile>
+    <EmbeddedResource Include="ProductKeyForm.resx">
+      <DependentUpon>ProductKeyForm.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Adjustments.resx">
       <DependentUpon>Adjustments.cs</DependentUpon>
     </EmbeddedResource>
@@ -453,10 +464,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>Reports\rptInventory.rdlc</TargetPath>
     </Content>
-    <Content Include="rptRecept.rdlc">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      <TargetPath>Reports\rptRecept.rdlc</TargetPath>
-    </Content>
     <Content Include="rptSoldItems.rdlc">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>Reports\rptSoldItems.rdlc</TargetPath>
@@ -472,6 +479,10 @@
     <Content Include="rptTopSell.rdlc">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <TargetPath>Reports\rptTopSell.rdlc</TargetPath>
+    </Content>
+    <Content Include="rptRecept.rdlc">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <TargetPath>Reports\rptRecept.rdlc</TargetPath>
     </Content>
     <Content Include="SqlServerTypes\readme.htm" />
     <Content Include="SqlServerTypes\x64\msvcr120.dll">

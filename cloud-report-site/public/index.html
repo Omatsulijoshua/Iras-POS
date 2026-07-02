@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>POSales Cloud Reports</title>
+  <link rel="stylesheet" href="/public/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <h1 id="storeName">POSales Cloud Reports</h1>
+      <p id="syncMeta">Waiting for uploaded reports</p>
+    </div>
+    <form method="post" action="/logout"><button>Logout</button></form>
+  </header>
+
+  <main>
+    <section class="filters">
+      <label>Cashier
+        <select id="cashierFilter">
+          <option value="All Cashier">All Cashier</option>
+        </select>
+      </label>
+      <label>Date From
+        <input id="dateFromFilter" type="date">
+      </label>
+      <label>Date To
+        <input id="dateToFilter" type="date">
+      </label>
+      <button id="clearFilters" type="button">Clear Filters</button>
+    </section>
+
+    <section class="metrics">
+      <article><span>Sales Total</span><strong id="salesTotal">0.00</strong></article>
+      <article><span>Transactions</span><strong id="transactions">0</strong></article>
+      <article><span>Items Sold</span><strong id="itemsSold">0</strong></article>
+      <article><span>Unsettled</span><strong id="unsettledTotal">0.00</strong></article>
+    </section>
+
+    <section>
+      <h2>Sales Report</h2>
+      <div class="table-wrap"><table id="salesTable"></table></div>
+    </section>
+
+    <section>
+      <h2>Unsettled Payments</h2>
+      <div class="table-wrap"><table id="unsettledTable"></table></div>
+    </section>
+
+    <section class="split">
+      <div>
+        <h2>Top Selling</h2>
+        <div class="table-wrap"><table id="topTable"></table></div>
+      </div>
+      <div>
+        <h2>Critical Items</h2>
+        <div class="table-wrap"><table id="criticalTable"></table></div>
+      </div>
+    </section>
+  </main>
+
+  <script src="/public/app.js"></script>
+</body>
+</html>

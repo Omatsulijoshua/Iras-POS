@@ -17,6 +17,13 @@ namespace POSales
         SqlCommand cm = new SqlCommand();
         DBConnect dbcon = new DBConnect();
         SqlDataReader dr;
+        Button btnPrintInvoice;
+        Button btnUnsettledPayment;
+        Button btnSaveCloud;
+        ProgressBar cloudProgress;
+        Label lblCloudStatus;
+        Timer cloudSyncTimer;
+        bool cloudSyncRunning;
 
         int qty;
         string id;
@@ -27,10 +34,72 @@ namespace POSales
         public Cashier()
         {
             InitializeComponent();
+            AddInvoiceAndCloudControls();
             ModernUI.Apply(this);
             cn = new SqlConnection(dbcon.myConnection());
             GetTranNo();
             lblDate.Text = DateTime.Now.ToShortDateString();
+            StartCloudSyncTimer();
+        }
+
+        private void AddInvoiceAndCloudControls()
+        {
+            btnPrintInvoice = CreateMenuButton("btnPrintInvoice", " Print Invoice");
+            btnPrintInvoice.Enabled = false;
+            btnPrintInvoice.Click += btnPrintInvoice_Click;
+            panel1.Controls.Add(btnPrintInvoice);
+            panel1.Controls.SetChildIndex(btnPrintInvoice, panel1.Controls.GetChildIndex(btnSettle));
+
+            btnUnsettledPayment = CreateMenuButton("btnUnsettledPayment", " Unsettled Payment");
+            btnUnsettledPayment.Enabled = false;
+            btnUnsettledPayment.Click += btnUnsettledPayment_Click;
+            panel1.Controls.Add(btnUnsettledPayment);
+            panel1.Controls.SetChildIndex(btnUnsettledPayment, panel1.Controls.GetChildIndex(btnSettle));
+
+            btnSaveCloud = CreateMenuButton("btnSaveCloud", " Save to Cloud");
+            btnSaveCloud.Click += btnSaveCloud_Click;
+            panel1.Controls.Add(btnSaveCloud);
+            panel1.Controls.SetChildIndex(btnSaveCloud, panel1.Controls.GetChildIndex(btnDSales));
+
+            cloudProgress = new ProgressBar();
+            cloudProgress.Dock = DockStyle.Top;
+            cloudProgress.Height = 14;
+            cloudProgress.Visible = false;
+            panel1.Controls.Add(cloudProgress);
+            panel1.Controls.SetChildIndex(cloudProgress, panel1.Controls.GetChildIndex(btnSaveCloud) + 1);
+
+            lblCloudStatus = new Label();
+            lblCloudStatus.Dock = DockStyle.Top;
+            lblCloudStatus.Height = 38;
+            lblCloudStatus.ForeColor = Color.White;
+            lblCloudStatus.TextAlign = ContentAlignment.MiddleCenter;
+            lblCloudStatus.Visible = false;
+            panel1.Controls.Add(lblCloudStatus);
+            panel1.Controls.SetChildIndex(lblCloudStatus, panel1.Controls.GetChildIndex(cloudProgress) + 1);
+        }
+
+        private Button CreateMenuButton(string name, string text)
+        {
+            Button button = new Button();
+            button.Dock = DockStyle.Top;
+            button.FlatAppearance.BorderSize = 0;
+            button.FlatStyle = FlatStyle.Flat;
+            button.ForeColor = Color.White;
+            button.ImageAlign = ContentAlignment.MiddleLeft;
+            button.Name = name;
+            button.Size = new Size(200, 50);
+            button.Text = text;
+            button.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button.UseVisualStyleBackColor = true;
+            return button;
+        }
+
+        private void StartCloudSyncTimer()
+        {
+            cloudSyncTimer = new Timer();
+            cloudSyncTimer.Interval = 30 * 60 * 1000;
+            cloudSyncTimer.Tick += async (s, e) => await SaveToCloudAsync(false);
+            cloudSyncTimer.Start();
         }
 
         private void picClose_Click(object sender, EventArgs e)
@@ -78,6 +147,80 @@ namespace POSales
             Settle settle = new Settle(this);
             settle.txtSale.Text = lblDisplayTotal.Text;
             settle.ShowDialog(this);
+        }
+
+        private void btnPrintInvoice_Click(object sender, EventArgs e)
+        {
+            slide(btnPrintInvoice);
+            if (!dbcon.GetPrintInvoiceEnabled())
+            {
+                MessageBox.Show("Print Invoice is disabled in Store Settings.", "Invoice", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (dgvCash.Rows.Count == 0)
+            {
+                MessageBox.Show("Add items to the cart before printing an invoice.", "Invoice", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            Recept invoice = new Recept(this);
+            invoice.LoadInvoice();
+            invoice.ShowDialog(this);
+        }
+
+        private void btnUnsettledPayment_Click(object sender, EventArgs e)
+        {
+            slide(btnUnsettledPayment);
+            if (!dbcon.GetUnsettledPaymentEnabled())
+            {
+                MessageBox.Show("Unsettled Payment is disabled in Store Settings.", "Unsettled Payment", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (dgvCash.Rows.Count == 0)
+            {
+                MessageBox.Show("Add items to the cart before printing unsettled payment.", "Unsettled Payment", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            Recept receipt = new Recept(this);
+            receipt.LoadUnsettledPayment();
+            receipt.ShowDialog(this);
+        }
+
+        private async void btnSaveCloud_Click(object sender, EventArgs e)
+        {
+            slide(btnSaveCloud);
+            await SaveToCloudAsync(true);
+        }
+
+        private async Task SaveToCloudAsync(bool showMessage)
+        {
+            if (cloudSyncRunning)
+                return;
+
+            cloudSyncRunning = true;
+            btnSaveCloud.Enabled = false;
+            cloudProgress.Value = 0;
+            cloudProgress.Visible = true;
+            lblCloudStatus.Text = "Saving reports to cloud...";
+            lblCloudStatus.Visible = true;
+
+            Progress<int> progress = new Progress<int>(value =>
+            {
+                cloudProgress.Value = Math.Max(0, Math.Min(100, value));
+            });
+
+            CloudSyncResult result = await new CloudSyncService().UploadAsync(lblUsername.Text, progress);
+            lblCloudStatus.Text = result.Message;
+            btnSaveCloud.Enabled = true;
+            cloudSyncRunning = false;
+
+            if (showMessage)
+            {
+                MessageBox.Show(result.Message, "Save to Cloud", MessageBoxButtons.OK, result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+            }
         }
 
         private void btnClear_Click(object sender, EventArgs e)
@@ -230,8 +373,8 @@ namespace POSales
                 lblSaleTotal.Text = total.ToString("#,##0.00");
                 lblDiscount.Text = discount.ToString("#,##0.00");
                 GetCartTotal();
-                if (hascart) { btnClear.Enabled = true; btnSettle.Enabled = true; btnDiscount.Enabled = true; }
-                else { btnClear.Enabled = false; btnSettle.Enabled = false; btnDiscount.Enabled = false; }
+                if (hascart) { btnClear.Enabled = true; btnSettle.Enabled = true; btnDiscount.Enabled = true; btnPrintInvoice.Enabled = dbcon.GetPrintInvoiceEnabled(); btnUnsettledPayment.Enabled = dbcon.GetUnsettledPaymentEnabled(); }
+                else { btnClear.Enabled = false; btnSettle.Enabled = false; btnDiscount.Enabled = false; btnPrintInvoice.Enabled = false; btnUnsettledPayment.Enabled = false; }
             }
             catch (Exception ex)
             {

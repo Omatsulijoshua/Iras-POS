@@ -58,10 +58,25 @@ namespace POSales
 
         public void LoadRecept(string pcash, string pchange, string paymentType)
         {
+            LoadReceptCore(pcash, pchange, paymentType, false);
+        }
+
+        public void LoadInvoice()
+        {
+            LoadReceptCore("", "", "Invoice", true);
+        }
+
+        public void LoadUnsettledPayment()
+        {
+            LoadReceptCore("0.00", "0.00", "Unsettled", true);
+        }
+
+        private void LoadReceptCore(string pcash, string pchange, string paymentType, bool invoiceMode)
+        {
             ReportDataSource rptDataSourece;
             try
             {
-                this.reportViewer1.LocalReport.ReportPath = Application.StartupPath + @"\Reports\rptRecept.rdlc";
+                ModernUI.LoadReportWithCustomLogo(this.reportViewer1.LocalReport, Application.StartupPath + @"\Reports\rptRecept.rdlc");
                 this.reportViewer1.LocalReport.DataSources.Clear();
 
                 DataSet1 ds = new DataSet1();
@@ -72,15 +87,16 @@ namespace POSales
                 da.Fill(ds.Tables["dtRecept"]);
                 cn.Close();
 
-                ReportParameter pVatable = new ReportParameter("pVatable", cashier.lblVatable.Text);
-                ReportParameter pVat = new ReportParameter("pVat", cashier.lblVat.Text);
-                ReportParameter pDiscount = new ReportParameter("pDiscount", cashier.lblDiscount.Text);
-                ReportParameter pTotal = new ReportParameter("pTotal", cashier.lblDisplayTotal.Text);
+                bool hideAmounts = paymentType == "Invoice";
+                ReportParameter pVatable = new ReportParameter("pVatable", hideAmounts ? "" : cashier.lblVatable.Text);
+                ReportParameter pVat = new ReportParameter("pVat", hideAmounts ? "" : cashier.lblVat.Text);
+                ReportParameter pDiscount = new ReportParameter("pDiscount", hideAmounts ? "" : cashier.lblDiscount.Text);
+                ReportParameter pTotal = new ReportParameter("pTotal", hideAmounts ? "" : cashier.lblDisplayTotal.Text);
                 ReportParameter pCash = new ReportParameter("pCash", pcash);
                 ReportParameter pChange = new ReportParameter("pChange", pchange);
                 ReportParameter pStore = new ReportParameter("pStore", store);
                 ReportParameter pAddress = new ReportParameter("pAddress", address);
-                ReportParameter pTransaction = new ReportParameter("pTransaction", "Invoice #: " + cashier.lblTranNo.Text);
+                ReportParameter pTransaction = new ReportParameter("pTransaction", (paymentType == "Invoice" ? "INVOICE NO: " : invoiceMode ? "UNSETTLED NO: " : "Invoice #: ") + cashier.lblTranNo.Text);
                 ReportParameter pCashier = new ReportParameter("pCashier", cashier.lblUsername.Text);
                 ReportParameter pPaymentType = new ReportParameter("pPaymentType", string.IsNullOrWhiteSpace(paymentType) ? "Cash" : paymentType);
                 ReportParameter pVatPercent = new ReportParameter("pVatPercent", dbcon.GetVatPercent().ToString("0.00"));

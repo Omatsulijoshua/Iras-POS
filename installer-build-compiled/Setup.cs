@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -127,8 +127,11 @@ namespace IRASSpotPOSSetup
             if (!Directory.Exists(installDir))
                 return;
 
-            foreach (string file in Directory.GetFiles(installDir, "dbconnection*.txt", SearchOption.TopDirectoryOnly))
-                File.Copy(file, Path.Combine(backupConfigDir, Path.GetFileName(file)), true);
+            foreach (string pattern in new[] { "dbconnection*.txt", "license*.lic" })
+            {
+                foreach (string file in Directory.GetFiles(installDir, pattern, SearchOption.TopDirectoryOnly))
+                    File.Copy(file, Path.Combine(backupConfigDir, Path.GetFileName(file)), true);
+            }
         }
 
         private static void RestoreDatabaseSettings(string installDir, string backupConfigDir)
@@ -136,8 +139,11 @@ namespace IRASSpotPOSSetup
             if (!Directory.Exists(backupConfigDir))
                 return;
 
-            foreach (string file in Directory.GetFiles(backupConfigDir, "dbconnection*.txt", SearchOption.TopDirectoryOnly))
-                File.Copy(file, Path.Combine(installDir, Path.GetFileName(file)), true);
+            foreach (string pattern in new[] { "dbconnection*.txt", "license*.lic" })
+            {
+                foreach (string file in Directory.GetFiles(backupConfigDir, pattern, SearchOption.TopDirectoryOnly))
+                    File.Copy(file, Path.Combine(installDir, Path.GetFileName(file)), true);
+            }
 
             DeleteDirectoryIfExists(backupConfigDir);
         }

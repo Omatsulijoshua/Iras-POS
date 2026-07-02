@@ -17,14 +17,21 @@ namespace POSales
         DBConnect dbcon = new DBConnect();
         SqlDataReader dr;
         Button btnStockRecords;
+        Button btnSaveCloud;
+        ProgressBar cloudProgress;
+        Label lblCloudStatus;
+        Timer cloudSyncTimer;
+        bool cloudSyncRunning;
         public string _pass;
         public MainForm()
         {
             InitializeComponent();
+            AddCloudMenu();
             ModernUI.Apply(this);
             AddStockRecordsMenu();
             customizeDesing();
             cn = new SqlConnection(dbcon.myConnection());            
+            StartCloudSyncTimer();
         }
 
 
@@ -62,6 +69,53 @@ namespace POSales
             panelSubRecord.Controls.SetChildIndex(btnPosRecord, 1);
             panelSubRecord.Controls.SetChildIndex(btnStockRecords, 2);
             panelSubRecord.Height = 135;
+        }
+
+        private void AddCloudMenu()
+        {
+            if (btnSaveCloud != null)
+                return;
+
+            btnSaveCloud = new Button();
+            btnSaveCloud.Dock = DockStyle.Top;
+            btnSaveCloud.FlatAppearance.BorderSize = 0;
+            btnSaveCloud.FlatStyle = FlatStyle.Flat;
+            btnSaveCloud.ForeColor = Color.White;
+            btnSaveCloud.Name = "btnSaveCloud";
+            btnSaveCloud.Padding = new Padding(5, 0, 0, 0);
+            btnSaveCloud.Size = new Size(183, 45);
+            btnSaveCloud.TabIndex = 10;
+            btnSaveCloud.Text = "Save to Cloud";
+            btnSaveCloud.TextAlign = ContentAlignment.MiddleLeft;
+            btnSaveCloud.UseVisualStyleBackColor = true;
+            btnSaveCloud.Click += btnSaveCloud_Click;
+
+            cloudProgress = new ProgressBar();
+            cloudProgress.Dock = DockStyle.Top;
+            cloudProgress.Height = 14;
+            cloudProgress.Visible = false;
+
+            lblCloudStatus = new Label();
+            lblCloudStatus.Dock = DockStyle.Top;
+            lblCloudStatus.Height = 38;
+            lblCloudStatus.ForeColor = Color.White;
+            lblCloudStatus.TextAlign = ContentAlignment.MiddleCenter;
+            lblCloudStatus.Visible = false;
+
+            panelSlide.Controls.Add(lblCloudStatus);
+            panelSlide.Controls.Add(cloudProgress);
+            panelSlide.Controls.Add(btnSaveCloud);
+            panelSlide.Controls.SetChildIndex(btnSaveCloud, panelSlide.Controls.GetChildIndex(btnSetting));
+            panelSlide.Controls.SetChildIndex(cloudProgress, panelSlide.Controls.GetChildIndex(btnSaveCloud) + 1);
+            panelSlide.Controls.SetChildIndex(lblCloudStatus, panelSlide.Controls.GetChildIndex(cloudProgress) + 1);
+        }
+
+        private void StartCloudSyncTimer()
+        {
+            cloudSyncTimer = new Timer();
+            cloudSyncTimer.Interval = 30 * 60 * 1000;
+            cloudSyncTimer.Tick += async (s, e) => await SaveToCloudAsync(false);
+            cloudSyncTimer.Start();
         }
 
         private void hideSubmenu()
@@ -182,6 +236,40 @@ namespace POSales
         private void btnSetting_Click(object sender, EventArgs e)
         {
             showSubmenu(panelSubSetting);
+        }
+
+        private async void btnSaveCloud_Click(object sender, EventArgs e)
+        {
+            hideSubmenu();
+            await SaveToCloudAsync(true);
+        }
+
+        private async Task SaveToCloudAsync(bool showMessage)
+        {
+            if (cloudSyncRunning)
+                return;
+
+            cloudSyncRunning = true;
+            btnSaveCloud.Enabled = false;
+            cloudProgress.Value = 0;
+            cloudProgress.Visible = true;
+            lblCloudStatus.Text = "Saving reports...";
+            lblCloudStatus.Visible = true;
+
+            Progress<int> progress = new Progress<int>(value =>
+            {
+                cloudProgress.Value = Math.Max(0, Math.Min(100, value));
+            });
+
+            CloudSyncResult result = await new CloudSyncService().UploadAsync(lblUsername.Text, progress);
+            lblCloudStatus.Text = result.Message;
+            btnSaveCloud.Enabled = true;
+            cloudSyncRunning = false;
+
+            if (showMessage)
+            {
+                MessageBox.Show(result.Message, "Save to Cloud", MessageBoxButtons.OK, result.Success ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
+            }
         }
 
         private void btnUser_Click(object sender, EventArgs e)

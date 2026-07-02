@@ -25,8 +25,17 @@ namespace Quiz_App
             if(panel1.Width >= 850)
             {
                 timer1.Stop();
-                Login f = new Login();
-                f.Show();
+                string reason;
+                if (POSales.LicenseManager.IsLicenseValid(out reason))
+                {
+                    Login f = new Login();
+                    f.Show();
+                }
+                else
+                {
+                    ProductKeyForm f = new ProductKeyForm();
+                    f.Show();
+                }
                 this.Hide();
             }
         }

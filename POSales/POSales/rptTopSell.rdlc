@@ -514,7 +514,8 @@
         </PageHeader>
         <PageHeight>11.69in</PageHeight>
         <PageWidth>8.27in</PageWidth>
-        <LeftMargin>0.5in</LeftMargin>
+        <LeftMargin>0.4in</LeftMargin>
+        <RightMargin>0.05in</RightMargin>
         <TopMargin>0.5in</TopMargin>
         <BottomMargin>0.5in</BottomMargin>
         <Style />

@@ -15,7 +15,30 @@ function ensureDataDir() {
   fs.mkdirSync(path.dirname(dataFile), { recursive: true });
 }
 
-function readData() {
+async function readData() {
+  const url = process.env.KV_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN;
+  
+  if (url && token) {
+    try {
+      const response = await fetch(`${url}/get/reports_data`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.ok) {
+        const json = await response.json();
+        if (json && json.result) {
+          const parsed = typeof json.result === 'string' ? JSON.parse(json.result) : json.result;
+          if (!Array.isArray(parsed.snapshots)) parsed.snapshots = [];
+          if (!Array.isArray(parsed.users) || parsed.users.length === 0) parsed.users = [{ username, password }];
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.error("Failed to read from Vercel KV:", e);
+    }
+  }
+
+  // Fallback to local file
   try {
     const data = JSON.parse(fs.readFileSync(dataFile, "utf8"));
     if (!Array.isArray(data.snapshots)) data.snapshots = [];
@@ -26,7 +49,29 @@ function readData() {
   }
 }
 
-function writeData(data) {
+async function writeData(data) {
+  const url = process.env.KV_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN;
+
+  if (url && token) {
+    try {
+      const response = await fetch(url, {
+        method: "POST",
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(["SET", "reports_data", JSON.stringify(data)])
+      });
+      if (response.ok) {
+        return;
+      }
+    } catch (e) {
+      console.error("Failed to write to Vercel KV:", e);
+    }
+  }
+
+  // Fallback to local file
   ensureDataDir();
   fs.writeFileSync(dataFile, JSON.stringify(data, null, 2));
 }
@@ -42,14 +87,15 @@ function authToken(user) {
   return Buffer.from(`${user.username}:${user.password}`).toString("base64");
 }
 
-function currentUser(req) {
+async function currentUser(req) {
   const cookies = parseCookies(req);
-  const data = readData();
+  const data = await readData();
   return data.users.find((user) => cookies.posales_auth === authToken(user));
 }
 
-function requireLogin(req, res, next) {
-  if (currentUser(req)) return next();
+async function requireLogin(req, res, next) {
+  const user = await currentUser(req);
+  if (user) return next();
   if (req.path.startsWith("/api/")) {
     res.status(401).json({ ok: false, error: "Not logged in" });
     return;
@@ -103,8 +149,8 @@ app.get("/login", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
 });
 
-app.post("/login", (req, res) => {
-  const data = readData();
+app.post("/login", async (req, res) => {
+  const data = await readData();
   const user = data.users.find((item) => item.username === req.body.username && item.password === req.body.password);
   if (user) {
     res.setHeader("Set-Cookie", `posales_auth=${encodeURIComponent(authToken(user))}; Path=/; HttpOnly; SameSite=Lax`);
@@ -119,31 +165,31 @@ app.post("/logout", (req, res) => {
   res.redirect("/login");
 });
 
-app.post("/api/upload", (req, res) => {
+app.post("/api/upload", async (req, res) => {
   const snapshot = req.body || {};
-  const data = readData();
+  const data = await readData();
   const systemName = systemNameFor(snapshot);
   snapshot.systemName = systemName;
   snapshot.receivedAt = new Date().toISOString();
   data.snapshots = data.snapshots.filter((item) => systemNameFor(item) !== systemName);
   data.snapshots.unshift(snapshot);
   data.snapshots = data.snapshots.slice(0, 100);
-  writeData(data);
+  await writeData(data);
   res.json({ ok: true, receivedAt: snapshot.receivedAt });
 });
 
-app.get("/api/reports", requireLogin, (req, res) => {
-  const data = readData();
+app.get("/api/reports", requireLogin, async (req, res) => {
+  const data = await readData();
   res.json(aggregateReports(data));
 });
 
-app.get("/api/admin/users", requireLogin, (req, res) => {
-  const data = readData();
+app.get("/api/admin/users", requireLogin, async (req, res) => {
+  const data = await readData();
   res.json({ users: data.users.map((user) => ({ username: user.username })) });
 });
 
-app.post("/api/admin/users", requireLogin, (req, res) => {
-  const data = readData();
+app.post("/api/admin/users", requireLogin, async (req, res) => {
+  const data = await readData();
   const newUsername = String(req.body.username || "").trim();
   const newPassword = String(req.body.password || "").trim();
   if (!newUsername || !newPassword) {
@@ -155,13 +201,13 @@ app.post("/api/admin/users", requireLogin, (req, res) => {
     return;
   }
   data.users.push({ username: newUsername, password: newPassword });
-  writeData(data);
+  await writeData(data);
   res.json({ ok: true });
 });
 
-app.post("/api/admin/password", requireLogin, (req, res) => {
-  const user = currentUser(req);
-  const data = readData();
+app.post("/api/admin/password", requireLogin, async (req, res) => {
+  const user = await currentUser(req);
+  const data = await readData();
   const currentPassword = String(req.body.currentPassword || "");
   const newPassword = String(req.body.newPassword || "").trim();
   if (!newPassword) {
@@ -174,7 +220,7 @@ app.post("/api/admin/password", requireLogin, (req, res) => {
     return;
   }
   storedUser.password = newPassword;
-  writeData(data);
+  await writeData(data);
   res.setHeader("Set-Cookie", `posales_auth=${encodeURIComponent(authToken(storedUser))}; Path=/; HttpOnly; SameSite=Lax`);
   res.json({ ok: true });
 });

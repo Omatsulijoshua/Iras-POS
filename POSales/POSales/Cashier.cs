@@ -76,6 +76,25 @@ namespace POSales
             lblCloudStatus.Visible = false;
             panel1.Controls.Add(lblCloudStatus);
             panel1.Controls.SetChildIndex(lblCloudStatus, panel1.Controls.GetChildIndex(cloudProgress) + 1);
+            ArrangeMenuButtons();
+        }
+
+        private void ArrangeMenuButtons()
+        {
+            // Set DockStyle.Top controls child index to 0 in exact top-to-bottom order
+            panel1.Controls.SetChildIndex(panel2, 0);
+            panel1.Controls.SetChildIndex(btnNTran, 0);
+            panel1.Controls.SetChildIndex(btnSearch, 0);
+            panel1.Controls.SetChildIndex(btnDiscount, 0);
+            if (btnPrintInvoice != null) panel1.Controls.SetChildIndex(btnPrintInvoice, 0);
+            if (btnUnsettledPayment != null) panel1.Controls.SetChildIndex(btnUnsettledPayment, 0);
+            panel1.Controls.SetChildIndex(btnSettle, 0);
+            panel1.Controls.SetChildIndex(btnClear, 0);
+            panel1.Controls.SetChildIndex(btnDSales, 0);
+            if (btnSaveCloud != null) panel1.Controls.SetChildIndex(btnSaveCloud, 0);
+            panel1.Controls.SetChildIndex(btnPass, 0);
+            if (cloudProgress != null) panel1.Controls.SetChildIndex(cloudProgress, 0);
+            if (lblCloudStatus != null) panel1.Controls.SetChildIndex(lblCloudStatus, 0);
         }
 
         private Button CreateMenuButton(string name, string text)

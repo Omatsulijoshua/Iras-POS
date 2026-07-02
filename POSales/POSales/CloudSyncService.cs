@@ -67,14 +67,17 @@ namespace POSales
         private string BuildSnapshotJson(string username)
         {
             bool includeUnsettled = dbcon.GetCloudIncludeUnsettled();
+            string systemName = dbcon.GetSystemName();
             StringBuilder json = new StringBuilder();
             json.Append("{");
             AppendProperty(json, "generatedAt", DateTime.Now.ToString("o", CultureInfo.InvariantCulture));
             json.Append(",");
+            AppendProperty(json, "systemName", systemName);
+            json.Append(",");
             AppendProperty(json, "uploadedBy", username ?? "");
             json.Append(",");
             json.Append("\"store\":");
-            json.Append(TableToObjectJson(Query("SELECT TOP 1 store, address, vat_type, vat_percent FROM tbStore")));
+            json.Append(TableToObjectJson(Query("SELECT TOP 1 store, address, system_name, vat_type, vat_percent FROM tbStore")));
             json.Append(",");
             json.Append("\"sales\":");
             json.Append(TableToArrayJson(Query("SELECT c.id, c.transno, c.pcode, p.pdesc, c.price, c.qty, c.disc, c.total, c.sdate, c.cashier, ISNULL(c.paymenttype, 'Cash') AS paymenttype FROM tbCart AS c INNER JOIN tbProduct AS p ON p.pcode = c.pcode WHERE c.status = 'Sold' ORDER BY c.sdate DESC, c.id DESC")));

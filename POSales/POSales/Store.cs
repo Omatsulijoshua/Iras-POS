@@ -18,6 +18,8 @@ namespace POSales
         DBConnect dbcon = new DBConnect();
         SqlDataReader dr;
         bool havestoreinfo = false;
+        Label lblSystemName;
+        TextBox txtSystemName;
         CheckBox chkPrintInvoice;
         CheckBox chkUnsettledPayment;
         CheckBox chkCloudSync;
@@ -35,9 +37,24 @@ namespace POSales
 
         private void AddCloudAndInvoiceSettings()
         {
+            lblSystemName = new Label();
+            lblSystemName.AutoSize = true;
+            lblSystemName.Location = new Point(50, 285);
+            lblSystemName.Name = "lblSystemName";
+            lblSystemName.Size = new Size(112, 20);
+            lblSystemName.Text = "System Name :";
+            Controls.Add(lblSystemName);
+
+            txtSystemName = new TextBox();
+            txtSystemName.Location = new Point(169, 282);
+            txtSystemName.Name = "txtSystemName";
+            txtSystemName.Size = new Size(473, 26);
+            txtSystemName.Text = Environment.MachineName;
+            Controls.Add(txtSystemName);
+
             chkPrintInvoice = new CheckBox();
             chkPrintInvoice.AutoSize = true;
-            chkPrintInvoice.Location = new Point(169, 285);
+            chkPrintInvoice.Location = new Point(169, 322);
             chkPrintInvoice.Name = "chkPrintInvoice";
             chkPrintInvoice.Size = new Size(260, 24);
             chkPrintInvoice.Text = "Enable Print Invoice Before Payment";
@@ -46,7 +63,7 @@ namespace POSales
 
             chkUnsettledPayment = new CheckBox();
             chkUnsettledPayment.AutoSize = true;
-            chkUnsettledPayment.Location = new Point(450, 285);
+            chkUnsettledPayment.Location = new Point(450, 322);
             chkUnsettledPayment.Name = "chkUnsettledPayment";
             chkUnsettledPayment.Size = new Size(205, 24);
             chkUnsettledPayment.Text = "Enable Unsettled Payment";
@@ -55,7 +72,7 @@ namespace POSales
 
             chkCloudSync = new CheckBox();
             chkCloudSync.AutoSize = true;
-            chkCloudSync.Location = new Point(169, 315);
+            chkCloudSync.Location = new Point(169, 352);
             chkCloudSync.Name = "chkCloudSync";
             chkCloudSync.Size = new Size(190, 24);
             chkCloudSync.Text = "Enable Save to Cloud";
@@ -64,7 +81,7 @@ namespace POSales
 
             chkCloudUnsettled = new CheckBox();
             chkCloudUnsettled.AutoSize = true;
-            chkCloudUnsettled.Location = new Point(385, 315);
+            chkCloudUnsettled.Location = new Point(385, 352);
             chkCloudUnsettled.Name = "chkCloudUnsettled";
             chkCloudUnsettled.Size = new Size(215, 24);
             chkCloudUnsettled.Text = "Include Unsettled Payments";
@@ -73,23 +90,23 @@ namespace POSales
 
             lblCloudUrl = new Label();
             lblCloudUrl.AutoSize = true;
-            lblCloudUrl.Location = new Point(50, 352);
+            lblCloudUrl.Location = new Point(50, 389);
             lblCloudUrl.Name = "lblCloudUrl";
             lblCloudUrl.Size = new Size(88, 20);
             lblCloudUrl.Text = "Cloud URL :";
             Controls.Add(lblCloudUrl);
 
             txtCloudUrl = new TextBox();
-            txtCloudUrl.Location = new Point(169, 349);
+            txtCloudUrl.Location = new Point(169, 386);
             txtCloudUrl.Name = "txtCloudUrl";
             txtCloudUrl.Size = new Size(473, 26);
             txtCloudUrl.Text = "http://localhost:3000/api/upload";
             Controls.Add(txtCloudUrl);
 
-            ClientSize = new Size(ClientSize.Width, 465);
-            panel1.Location = new Point(0, 416);
-            btnSave.Location = new Point(437, 385);
-            btnCancel.Location = new Point(548, 385);
+            ClientSize = new Size(ClientSize.Width, 505);
+            panel1.Location = new Point(0, 456);
+            btnSave.Location = new Point(437, 425);
+            btnCancel.Location = new Point(548, 425);
         }
 
         public void LoadStore()
@@ -104,6 +121,7 @@ namespace POSales
                     havestoreinfo = true;
                     txtStName.Text = dr["store"].ToString();
                     txtAddress.Text = dr["address"].ToString();
+                    txtSystemName.Text = dr["system_name"] != DBNull.Value && !string.IsNullOrWhiteSpace(dr["system_name"].ToString()) ? dr["system_name"].ToString() : Environment.MachineName;
                     cboVatType.Text = dr["vat_type"] != DBNull.Value && !string.IsNullOrEmpty(dr["vat_type"].ToString()) ? dr["vat_type"].ToString() : "Old";
                     txtVatPercent.Text = dr["vat_percent"] != DBNull.Value ? Convert.ToDouble(dr["vat_percent"]).ToString("0.00") : "12.00";
                     chkSpecialNote.Checked = dr["special_note_enabled"] != DBNull.Value ? Convert.ToBoolean(dr["special_note_enabled"]) : false;
@@ -120,16 +138,21 @@ namespace POSales
                         {
                             picLogo.Image = Image.FromStream(ms);
                         }
+                        picLogo.Tag = null;
+                        picLogo.BackColor = Color.Transparent;
                     }
                     else
                     {
-                        picLogo.Image = null;
+                        picLogo.Image = ModernUI.StoreLogo;
+                        picLogo.Tag = "placeholder";
+                        picLogo.BackColor = Color.Transparent;
                     }
                 }
                 else
                 {
                     txtStName.Clear();
                     txtAddress.Clear();
+                    txtSystemName.Text = Environment.MachineName;
                     cboVatType.SelectedIndex = 0;
                     txtVatPercent.Text = "12.00";
                     chkSpecialNote.Checked = false;
@@ -138,7 +161,9 @@ namespace POSales
                     chkCloudSync.Checked = false;
                     chkCloudUnsettled.Checked = true;
                     txtCloudUrl.Text = "http://localhost:3000/api/upload";
-                    picLogo.Image = null;
+                    picLogo.Image = ModernUI.StoreLogo;
+                    picLogo.Tag = "placeholder";
+                    picLogo.BackColor = Color.Transparent;
                 }
                 dr.Close();
                 cn.Close();
@@ -161,7 +186,7 @@ namespace POSales
                     double.TryParse(txtVatPercent.Text, out vatPercent);
 
                     byte[] logoBytes = null;
-                    if (picLogo.Image != null)
+                    if (picLogo.Image != null && Convert.ToString(picLogo.Tag) != "placeholder")
                     {
                         using (System.IO.MemoryStream ms = new System.IO.MemoryStream())
                         {
@@ -176,14 +201,15 @@ namespace POSales
                     cn.Open();
                     if(havestoreinfo)
                     {
-                        cm = new SqlCommand("UPDATE tbStore SET store = @store, address = @address, vat_type = @vat_type, vat_percent = @vat_percent, special_note_enabled = @special_note_enabled, logo = @logo, print_invoice_enabled = @print_invoice_enabled, unsettled_payment_enabled = @unsettled_payment_enabled, cloud_sync_enabled = @cloud_sync_enabled, cloud_include_unsettled = @cloud_include_unsettled, cloud_url = @cloud_url", cn);
+                        cm = new SqlCommand("UPDATE tbStore SET store = @store, address = @address, system_name = @system_name, vat_type = @vat_type, vat_percent = @vat_percent, special_note_enabled = @special_note_enabled, logo = @logo, print_invoice_enabled = @print_invoice_enabled, unsettled_payment_enabled = @unsettled_payment_enabled, cloud_sync_enabled = @cloud_sync_enabled, cloud_include_unsettled = @cloud_include_unsettled, cloud_url = @cloud_url", cn);
                     }
                     else
                     {
-                        cm = new SqlCommand("INSERT INTO tbStore (store, address, vat_type, vat_percent, special_note_enabled, logo, print_invoice_enabled, unsettled_payment_enabled, cloud_sync_enabled, cloud_include_unsettled, cloud_url) VALUES (@store, @address, @vat_type, @vat_percent, @special_note_enabled, @logo, @print_invoice_enabled, @unsettled_payment_enabled, @cloud_sync_enabled, @cloud_include_unsettled, @cloud_url)", cn);
+                        cm = new SqlCommand("INSERT INTO tbStore (store, address, system_name, vat_type, vat_percent, special_note_enabled, logo, print_invoice_enabled, unsettled_payment_enabled, cloud_sync_enabled, cloud_include_unsettled, cloud_url) VALUES (@store, @address, @system_name, @vat_type, @vat_percent, @special_note_enabled, @logo, @print_invoice_enabled, @unsettled_payment_enabled, @cloud_sync_enabled, @cloud_include_unsettled, @cloud_url)", cn);
                     }
                     cm.Parameters.AddWithValue("@store", txtStName.Text);
                     cm.Parameters.AddWithValue("@address", txtAddress.Text);
+                    cm.Parameters.AddWithValue("@system_name", txtSystemName.Text.Trim());
                     cm.Parameters.AddWithValue("@vat_type", cboVatType.Text);
                     cm.Parameters.AddWithValue("@vat_percent", vatPercent);
                     cm.Parameters.AddWithValue("@special_note_enabled", chkSpecialNote.Checked);
@@ -227,6 +253,8 @@ namespace POSales
                     if (ofd.ShowDialog() == DialogResult.OK)
                     {
                         picLogo.Image = Image.FromFile(ofd.FileName);
+                        picLogo.Tag = null;
+                        picLogo.BackColor = Color.Transparent;
                     }
                 }
             }
@@ -238,7 +266,14 @@ namespace POSales
 
         private void btnClear_Click(object sender, EventArgs e)
         {
-            picLogo.Image = null;
+            ShowLogoPlaceholder();
+        }
+
+        private void ShowLogoPlaceholder()
+        {
+            picLogo.Image = ModernUI.StoreLogo;
+            picLogo.Tag = "placeholder";
+            picLogo.BackColor = Color.Transparent;
         }
 
         private void btnCancel_Click(object sender, EventArgs e)

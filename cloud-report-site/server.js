@@ -6,7 +6,6 @@ const app = express();
 const port = process.env.PORT || 3000;
 const username = process.env.ADMIN_USERNAME || "admin";
 const password = process.env.ADMIN_PASSWORD || "admin";
-const authCookie = Buffer.from(`${username}:${password}`).toString("base64");
 const dataFile = process.env.DATA_FILE || path.join(process.env.VERCEL ? "/tmp" : __dirname, "data", "reports.json");
 
 app.use(express.json({ limit: "25mb" }));
@@ -18,9 +17,12 @@ function ensureDataDir() {
 
 function readData() {
   try {
-    return JSON.parse(fs.readFileSync(dataFile, "utf8"));
+    const data = JSON.parse(fs.readFileSync(dataFile, "utf8"));
+    if (!Array.isArray(data.snapshots)) data.snapshots = [];
+    if (!Array.isArray(data.users) || data.users.length === 0) data.users = [{ username, password }];
+    return data;
   } catch {
-    return { snapshots: [] };
+    return { snapshots: [], users: [{ username, password }] };
   }
 }
 
@@ -36,10 +38,64 @@ function parseCookies(req) {
   }));
 }
 
-function requireLogin(req, res, next) {
+function authToken(user) {
+  return Buffer.from(`${user.username}:${user.password}`).toString("base64");
+}
+
+function currentUser(req) {
   const cookies = parseCookies(req);
-  if (cookies.posales_auth === authCookie) return next();
+  const data = readData();
+  return data.users.find((user) => cookies.posales_auth === authToken(user));
+}
+
+function requireLogin(req, res, next) {
+  if (currentUser(req)) return next();
+  if (req.path.startsWith("/api/")) {
+    res.status(401).json({ ok: false, error: "Not logged in" });
+    return;
+  }
   res.redirect("/login");
+}
+
+function systemNameFor(snapshot) {
+  return String(snapshot.systemName || snapshot.store?.system_name || snapshot.store?.store || "Unknown System").trim() || "Unknown System";
+}
+
+function withSystem(rows, snapshot) {
+  const systemName = systemNameFor(snapshot);
+  const storeName = snapshot.store?.store || "";
+  return (rows || []).map((row) => ({ ...row, systemName, storeName }));
+}
+
+function aggregateReports(data) {
+  const snapshots = data.snapshots || [];
+  const systems = snapshots.map((snapshot) => {
+    const sales = snapshot.sales || [];
+    const inventory = snapshot.inventory || [];
+    return {
+      systemName: systemNameFor(snapshot),
+      storeName: snapshot.store?.store || "",
+      receivedAt: snapshot.receivedAt || "",
+      generatedAt: snapshot.generatedAt || "",
+      productCount: inventory.length,
+      salesCount: sales.length
+    };
+  });
+
+  return {
+    generatedAt: snapshots[0]?.generatedAt || "",
+    receivedAt: snapshots[0]?.receivedAt || "",
+    uploadedBy: snapshots[0]?.uploadedBy || "",
+    systems,
+    store: snapshots[0]?.store || {},
+    sales: snapshots.flatMap((snapshot) => withSystem(snapshot.sales, snapshot)),
+    unsettled: snapshots.flatMap((snapshot) => withSystem(snapshot.unsettled, snapshot)),
+    inventory: snapshots.flatMap((snapshot) => withSystem(snapshot.inventory, snapshot)),
+    criticalItems: snapshots.flatMap((snapshot) => withSystem(snapshot.criticalItems, snapshot)),
+    cancelled: snapshots.flatMap((snapshot) => withSystem(snapshot.cancelled, snapshot)),
+    soldItems: snapshots.flatMap((snapshot) => withSystem(snapshot.soldItems, snapshot)),
+    topSelling: snapshots.flatMap((snapshot) => withSystem(snapshot.topSelling, snapshot))
+  };
 }
 
 app.get("/login", (req, res) => {
@@ -47,8 +103,10 @@ app.get("/login", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  if (req.body.username === username && req.body.password === password) {
-    res.setHeader("Set-Cookie", `posales_auth=${encodeURIComponent(authCookie)}; Path=/; HttpOnly; SameSite=Lax`);
+  const data = readData();
+  const user = data.users.find((item) => item.username === req.body.username && item.password === req.body.password);
+  if (user) {
+    res.setHeader("Set-Cookie", `posales_auth=${encodeURIComponent(authToken(user))}; Path=/; HttpOnly; SameSite=Lax`);
     res.redirect("/");
     return;
   }
@@ -63,7 +121,10 @@ app.post("/logout", (req, res) => {
 app.post("/api/upload", (req, res) => {
   const snapshot = req.body || {};
   const data = readData();
+  const systemName = systemNameFor(snapshot);
+  snapshot.systemName = systemName;
   snapshot.receivedAt = new Date().toISOString();
+  data.snapshots = data.snapshots.filter((item) => systemNameFor(item) !== systemName);
   data.snapshots.unshift(snapshot);
   data.snapshots = data.snapshots.slice(0, 100);
   writeData(data);
@@ -72,7 +133,49 @@ app.post("/api/upload", (req, res) => {
 
 app.get("/api/reports", requireLogin, (req, res) => {
   const data = readData();
-  res.json(data.snapshots[0] || {});
+  res.json(aggregateReports(data));
+});
+
+app.get("/api/admin/users", requireLogin, (req, res) => {
+  const data = readData();
+  res.json({ users: data.users.map((user) => ({ username: user.username })) });
+});
+
+app.post("/api/admin/users", requireLogin, (req, res) => {
+  const data = readData();
+  const newUsername = String(req.body.username || "").trim();
+  const newPassword = String(req.body.password || "").trim();
+  if (!newUsername || !newPassword) {
+    res.status(400).json({ ok: false, error: "Username and password are required." });
+    return;
+  }
+  if (data.users.some((user) => user.username.toLowerCase() === newUsername.toLowerCase())) {
+    res.status(400).json({ ok: false, error: "Admin username already exists." });
+    return;
+  }
+  data.users.push({ username: newUsername, password: newPassword });
+  writeData(data);
+  res.json({ ok: true });
+});
+
+app.post("/api/admin/password", requireLogin, (req, res) => {
+  const user = currentUser(req);
+  const data = readData();
+  const currentPassword = String(req.body.currentPassword || "");
+  const newPassword = String(req.body.newPassword || "").trim();
+  if (!newPassword) {
+    res.status(400).json({ ok: false, error: "New password is required." });
+    return;
+  }
+  const storedUser = data.users.find((item) => item.username === user.username);
+  if (!storedUser || storedUser.password !== currentPassword) {
+    res.status(400).json({ ok: false, error: "Current password is incorrect." });
+    return;
+  }
+  storedUser.password = newPassword;
+  writeData(data);
+  res.setHeader("Set-Cookie", `posales_auth=${encodeURIComponent(authToken(storedUser))}; Path=/; HttpOnly; SameSite=Lax`);
+  res.json({ ok: true });
 });
 
 app.get("/", requireLogin, (req, res) => {

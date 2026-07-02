@@ -88,14 +88,14 @@ namespace POSales
                 cn.Close();
 
                 bool hideAmounts = paymentType == "Invoice";
-                ReportParameter pVatable = new ReportParameter("pVatable", hideAmounts ? "" : cashier.lblVatable.Text);
-                ReportParameter pVat = new ReportParameter("pVat", hideAmounts ? "" : cashier.lblVat.Text);
-                ReportParameter pDiscount = new ReportParameter("pDiscount", hideAmounts ? "" : cashier.lblDiscount.Text);
-                ReportParameter pTotal = new ReportParameter("pTotal", hideAmounts ? "" : cashier.lblDisplayTotal.Text);
-                ReportParameter pCash = new ReportParameter("pCash", pcash);
-                ReportParameter pChange = new ReportParameter("pChange", pchange);
-                ReportParameter pStore = new ReportParameter("pStore", store);
-                ReportParameter pAddress = new ReportParameter("pAddress", address);
+                ReportParameter pVatable = new ReportParameter("pVatable", hideAmounts ? " " : cashier.lblVatable.Text);
+                ReportParameter pVat = new ReportParameter("pVat", hideAmounts ? " " : cashier.lblVat.Text);
+                ReportParameter pDiscount = new ReportParameter("pDiscount", hideAmounts ? " " : cashier.lblDiscount.Text);
+                ReportParameter pTotal = new ReportParameter("pTotal", hideAmounts ? " " : cashier.lblDisplayTotal.Text);
+                ReportParameter pCash = new ReportParameter("pCash", string.IsNullOrWhiteSpace(pcash) ? " " : pcash);
+                ReportParameter pChange = new ReportParameter("pChange", string.IsNullOrWhiteSpace(pchange) ? " " : pchange);
+                ReportParameter pStore = new ReportParameter("pStore", string.IsNullOrWhiteSpace(store) ? " " : store);
+                ReportParameter pAddress = new ReportParameter("pAddress", string.IsNullOrWhiteSpace(address) ? " " : address);
                 ReportParameter pTransaction = new ReportParameter("pTransaction", (paymentType == "Invoice" ? "INVOICE NO: " : invoiceMode ? "UNSETTLED NO: " : "Invoice #: ") + cashier.lblTranNo.Text);
                 ReportParameter pCashier = new ReportParameter("pCashier", cashier.lblUsername.Text);
                 ReportParameter pPaymentType = new ReportParameter("pPaymentType", string.IsNullOrWhiteSpace(paymentType) ? "Cash" : paymentType);
@@ -107,7 +107,7 @@ namespace POSales
                 {
                     specialNote = dbcon.GetTransactionNote(cashier.lblTranNo.Text);
                 }
-                ReportParameter pSpecialNote = new ReportParameter("pSpecialNote", specialNote);
+                ReportParameter pSpecialNote = new ReportParameter("pSpecialNote", string.IsNullOrWhiteSpace(specialNote) ? " " : specialNote);
 
                 reportViewer1.LocalReport.SetParameters(pVatable);
                 reportViewer1.LocalReport.SetParameters(pVat);
@@ -129,15 +129,12 @@ namespace POSales
                 reportViewer1.SetDisplayMode(Microsoft.Reporting.WinForms.DisplayMode.PrintLayout);
                 reportViewer1.ZoomMode = ZoomMode.Percent;
                 reportViewer1.ZoomPercent = 30;
-
-
             }
             catch (Exception ex)
             {
                 cn.Close();
                 MessageBox.Show(ex.Message);
             }
-
         }
 
         private void Recept_KeyDown(object sender, KeyEventArgs e)

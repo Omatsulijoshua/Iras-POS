@@ -13,9 +13,19 @@ function total(rows, field) {
 function renderTable(id, rows, columns) {
   const table = document.getElementById(id);
   const body = (rows || []).slice(0, 100).map((row) => {
-    return `<tr>${columns.map((column) => `<td>${row[column] ?? ""}</td>`).join("")}</tr>`;
+    return `<tr>${columns.map((column) => `<td>${escapeHtml(row[column] ?? "")}</td>`).join("")}</tr>`;
   }).join("");
   table.innerHTML = `<thead><tr>${columns.map((column) => `<th>${column}</th>`).join("")}</tr></thead><tbody>${body || `<tr><td colspan="${columns.length}">No data uploaded yet</td></tr>`}</tbody>`;
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    "\"": "&quot;",
+    "'": "&#039;"
+  })[char]);
 }
 
 function rowDateValue(row) {
@@ -43,6 +53,7 @@ function normalizeDay(value, endOfDay = false) {
 
 function currentFilters() {
   return {
+    system: document.getElementById("systemFilter").value,
     cashier: document.getElementById("cashierFilter").value,
     dateFrom: normalizeDay(document.getElementById("dateFromFilter").value),
     dateTo: normalizeDay(document.getElementById("dateToFilter").value, true)
@@ -52,6 +63,7 @@ function currentFilters() {
 function filterRows(rows) {
   const filters = currentFilters();
   return (rows || []).filter((row) => {
+    if (filters.system !== "All Systems" && String(row.systemName || "") !== filters.system) return false;
     if (filters.cashier !== "All Cashier" && String(row.cashier || "") !== filters.cashier) return false;
     const date = rowDateValue(row);
     if (filters.dateFrom && date && date < filters.dateFrom) return false;
@@ -59,6 +71,19 @@ function filterRows(rows) {
     if ((filters.dateFrom || filters.dateTo) && !date) return false;
     return true;
   });
+}
+
+function uniqueSystems(data) {
+  const names = new Set();
+  (data.systems || []).forEach((system) => {
+    const systemName = String(system.systemName || "").trim();
+    if (systemName) names.add(systemName);
+  });
+  [...(data.sales || []), ...(data.unsettled || []), ...(data.inventory || [])].forEach((row) => {
+    const systemName = String(row.systemName || "").trim();
+    if (systemName) names.add(systemName);
+  });
+  return Array.from(names).sort((a, b) => a.localeCompare(b));
 }
 
 function uniqueCashiers(data) {
@@ -70,11 +95,19 @@ function uniqueCashiers(data) {
   return Array.from(names).sort((a, b) => a.localeCompare(b));
 }
 
+function populateSystems(data) {
+  const select = document.getElementById("systemFilter");
+  const selected = select.value || "All Systems";
+  const options = ["All Systems", ...uniqueSystems(data)];
+  select.innerHTML = options.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+  select.value = options.includes(selected) ? selected : "All Systems";
+}
+
 function populateCashiers(data) {
   const select = document.getElementById("cashierFilter");
   const selected = select.value || "All Cashier";
   const options = ["All Cashier", ...uniqueCashiers(data)];
-  select.innerHTML = options.map((name) => `<option value="${name}">${name}</option>`).join("");
+  select.innerHTML = options.map((name) => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
   select.value = options.includes(selected) ? selected : "All Cashier";
 }
 
@@ -82,15 +115,9 @@ function defaultDateRange(data) {
   const fromInput = document.getElementById("dateFromFilter");
   const toInput = document.getElementById("dateToFilter");
   if (fromInput.value || toInput.value) return;
-
-  const dates = [...(data.sales || []), ...(data.unsettled || [])]
-    .map(rowDateValue)
-    .filter(Boolean)
-    .sort((a, b) => a - b);
-
-  if (dates.length === 0) return;
-  fromInput.value = dateInputValue(dates[0]);
-  toInput.value = dateInputValue(dates[dates.length - 1]);
+  const today = new Date();
+  fromInput.value = dateInputValue(today);
+  toInput.value = dateInputValue(today);
 }
 
 function topSellingFromRows(rows) {
@@ -111,38 +138,124 @@ function topSellingFromRows(rows) {
 function renderDashboard(data) {
   const sales = filterRows(data.sales || []);
   const unsettled = filterRows(data.unsettled || []);
+  const inventory = filterRowsWithoutDates(data.inventory || []);
   const store = data.store || {};
+  const todayRows = (data.sales || []).filter((row) => {
+    const date = rowDateValue(row);
+    if (!date) return false;
+    const today = new Date();
+    return date.getFullYear() === today.getFullYear() && date.getMonth() === today.getMonth() && date.getDate() === today.getDate();
+  });
+
+  const globalSystemsCount = data.systems ? data.systems.length : 0;
+  const globalProductCount = data.systems ? data.systems.reduce((sum, sys) => sum + number(sys.productCount), 0) : 0;
+  const globalTodaySales = total(todayRows, "total");
+
+  document.getElementById("globalSystemsCount").textContent = globalSystemsCount;
+  document.getElementById("globalProductCount").textContent = globalProductCount;
+  document.getElementById("globalTodaySales").textContent = money.format(globalTodaySales);
 
   document.getElementById("storeName").textContent = store.store || "POSales Cloud Reports";
   document.getElementById("syncMeta").textContent = data.receivedAt ? `Last sync: ${new Date(data.receivedAt).toLocaleString()} by ${data.uploadedBy || "POS"}` : "Waiting for uploaded reports";
+  document.getElementById("todaySalesTotal").textContent = money.format(total(todayRows, "total"));
   document.getElementById("salesTotal").textContent = money.format(total(sales, "total"));
   document.getElementById("transactions").textContent = new Set(sales.map((row) => row.transno)).size;
   document.getElementById("itemsSold").textContent = sales.reduce((sum, row) => sum + number(row.qty), 0);
+  document.getElementById("productCount").textContent = inventory.length;
   document.getElementById("unsettledTotal").textContent = money.format(total(unsettled, "total"));
 
-  renderTable("salesTable", sales, ["transno", "sdate", "cashier", "pcode", "pdesc", "price", "qty", "disc", "total", "paymenttype"]);
-  renderTable("unsettledTable", unsettled, ["transno", "sdate", "cashier", "pcode", "pdesc", "price", "qty", "disc", "total"]);
+  renderTable("systemsTable", data.systems || [], ["systemName", "storeName", "productCount", "salesCount", "receivedAt"]);
+  renderTable("salesTable", sales, ["systemName", "transno", "sdate", "cashier", "pcode", "pdesc", "price", "qty", "disc", "total", "paymenttype"]);
+  renderTable("unsettledTable", unsettled, ["systemName", "transno", "sdate", "cashier", "pcode", "pdesc", "price", "qty", "disc", "total"]);
   renderTable("topTable", topSellingFromRows(sales), ["pcode", "pdesc", "qty", "total"]);
-  renderTable("criticalTable", data.criticalItems || [], Object.keys((data.criticalItems || [])[0] || { pcode: "", pdesc: "", qty: "", reorder: "" }));
+  const criticalRows = filterRowsWithoutDates(data.criticalItems || []);
+  renderTable("criticalTable", criticalRows, Object.keys(criticalRows[0] || { systemName: "", pcode: "", pdesc: "", qty: "", reorder: "" }));
+}
+
+function filterRowsWithoutDates(rows) {
+  const filters = currentFilters();
+  return (rows || []).filter((row) => {
+    if (filters.system !== "All Systems" && String(row.systemName || "") !== filters.system) return false;
+    return true;
+  });
 }
 
 async function loadReports() {
   const response = await fetch("/api/reports");
   latestReport = await response.json();
+  populateSystems(latestReport);
   populateCashiers(latestReport);
   defaultDateRange(latestReport);
   renderDashboard(latestReport);
 }
 
+document.getElementById("systemFilter").addEventListener("change", () => renderDashboard(latestReport));
 document.getElementById("cashierFilter").addEventListener("change", () => renderDashboard(latestReport));
 document.getElementById("dateFromFilter").addEventListener("change", () => renderDashboard(latestReport));
 document.getElementById("dateToFilter").addEventListener("change", () => renderDashboard(latestReport));
 document.getElementById("clearFilters").addEventListener("click", () => {
+  document.getElementById("systemFilter").value = "All Systems";
   document.getElementById("cashierFilter").value = "All Cashier";
-  document.getElementById("dateFromFilter").value = "";
-  document.getElementById("dateToFilter").value = "";
+  const today = dateInputValue(new Date());
+  document.getElementById("dateFromFilter").value = today;
+  document.getElementById("dateToFilter").value = today;
   renderDashboard(latestReport);
 });
 
+async function loadAdminUsers() {
+  const response = await fetch("/api/admin/users");
+  if (!response.ok) return;
+  const data = await response.json();
+  renderTable("adminUsersTable", data.users || [], ["username"]);
+}
+
+async function postJson(url, payload) {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed.");
+  return data;
+}
+
+document.getElementById("passwordForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const message = document.getElementById("adminMessage");
+  try {
+    await postJson("/api/admin/password", {
+      currentPassword: document.getElementById("currentPassword").value,
+      newPassword: document.getElementById("newPassword").value
+    });
+    document.getElementById("passwordForm").reset();
+    message.textContent = "Password changed.";
+  } catch (error) {
+    message.textContent = error.message;
+  }
+});
+
+document.getElementById("adminForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const message = document.getElementById("adminMessage");
+  try {
+    await postJson("/api/admin/users", {
+      username: document.getElementById("adminUsername").value,
+      password: document.getElementById("adminPassword").value
+    });
+    document.getElementById("adminForm").reset();
+    message.textContent = "Admin created.";
+    await loadAdminUsers();
+  } catch (error) {
+    message.textContent = error.message;
+  }
+});
+
+// Initialize date filters to today immediately
+const todayDateStr = dateInputValue(new Date());
+document.getElementById("dateFromFilter").value = todayDateStr;
+document.getElementById("dateToFilter").value = todayDateStr;
+
 loadReports();
+loadAdminUsers();
 setInterval(loadReports, 60000);

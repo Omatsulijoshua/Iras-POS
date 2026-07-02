@@ -33,6 +33,7 @@ namespace POSales
                         "IF COL_LENGTH('dbo.tbStore', 'vat_percent') IS NULL ALTER TABLE dbo.tbStore ADD vat_percent DECIMAL(18, 2) NULL; " +
                         "IF COL_LENGTH('dbo.tbStore', 'special_note_enabled') IS NULL ALTER TABLE dbo.tbStore ADD special_note_enabled BIT NULL; " +
                         "IF COL_LENGTH('dbo.tbStore', 'logo') IS NULL ALTER TABLE dbo.tbStore ADD logo VARBINARY(MAX) NULL; " +
+                        "IF COL_LENGTH('dbo.tbStore', 'system_name') IS NULL ALTER TABLE dbo.tbStore ADD system_name NVARCHAR(100) NULL; " +
                         "IF COL_LENGTH('dbo.tbStore', 'print_invoice_enabled') IS NULL ALTER TABLE dbo.tbStore ADD print_invoice_enabled BIT NULL; " +
                         "IF COL_LENGTH('dbo.tbStore', 'unsettled_payment_enabled') IS NULL ALTER TABLE dbo.tbStore ADD unsettled_payment_enabled BIT NULL; " +
                         "IF COL_LENGTH('dbo.tbStore', 'cloud_sync_enabled') IS NULL ALTER TABLE dbo.tbStore ADD cloud_sync_enabled BIT NULL; " +
@@ -245,6 +246,26 @@ namespace POSales
         public bool GetPrintInvoiceEnabled()
         {
             return GetStoreBool("print_invoice_enabled", true);
+        }
+
+        public string GetSystemName()
+        {
+            string systemName = Environment.MachineName;
+            try
+            {
+                using (SqlConnection tempCn = new SqlConnection(myConnection()))
+                {
+                    tempCn.Open();
+                    using (SqlCommand tempCm = new SqlCommand("SELECT TOP 1 system_name FROM tbStore", tempCn))
+                    {
+                        object result = tempCm.ExecuteScalar();
+                        if (result != null && result != DBNull.Value && !string.IsNullOrWhiteSpace(result.ToString()))
+                            systemName = result.ToString();
+                    }
+                }
+            }
+            catch { }
+            return systemName;
         }
 
         public bool GetUnsettledPaymentEnabled()

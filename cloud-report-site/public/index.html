@@ -4,6 +4,9 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>POSales Cloud Reports</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/public/styles.css">
 </head>
 <body>
@@ -12,11 +15,40 @@
       <h1 id="storeName">POSales Cloud Reports</h1>
       <p id="syncMeta">Waiting for uploaded reports</p>
     </div>
-    <form method="post" action="/logout"><button>Logout</button></form>
+    <form method="post" action="/logout"><button class="danger-button">Logout</button></form>
   </header>
 
   <main>
+    <section class="global-banner">
+      <div class="global-stat-card">
+        <div class="stat-icon">💻</div>
+        <div class="stat-content">
+          <span class="stat-title">Linked Systems</span>
+          <strong id="globalSystemsCount" class="stat-number">0</strong>
+        </div>
+      </div>
+      <div class="global-stat-card">
+        <div class="stat-icon">📦</div>
+        <div class="stat-content">
+          <span class="stat-title">Total Products</span>
+          <strong id="globalProductCount" class="stat-number">0</strong>
+        </div>
+      </div>
+      <div class="global-stat-card">
+        <div class="stat-icon">💰</div>
+        <div class="stat-content">
+          <span class="stat-title">Today's Sales (All Systems)</span>
+          <strong id="globalTodaySales" class="stat-number">0.00</strong>
+        </div>
+      </div>
+    </section>
+
     <section class="filters">
+      <label>System
+        <select id="systemFilter">
+          <option value="All Systems">All Systems</option>
+        </select>
+      </label>
       <label>Cashier
         <select id="cashierFilter">
           <option value="All Cashier">All Cashier</option>
@@ -32,10 +64,17 @@
     </section>
 
     <section class="metrics">
+      <article><span>Today's Sales</span><strong id="todaySalesTotal">0.00</strong></article>
       <article><span>Sales Total</span><strong id="salesTotal">0.00</strong></article>
       <article><span>Transactions</span><strong id="transactions">0</strong></article>
       <article><span>Items Sold</span><strong id="itemsSold">0</strong></article>
+      <article><span>Products</span><strong id="productCount">0</strong></article>
       <article><span>Unsettled</span><strong id="unsettledTotal">0.00</strong></article>
+    </section>
+
+    <section>
+      <h2>Linked Systems</h2>
+      <div class="table-wrap"><table id="systemsTable"></table></div>
     </section>
 
     <section>
@@ -46,6 +85,27 @@
     <section>
       <h2>Unsettled Payments</h2>
       <div class="table-wrap"><table id="unsettledTable"></table></div>
+    </section>
+
+    <section class="admin-panel">
+      <div>
+        <h2>Change Password</h2>
+        <form id="passwordForm" class="admin-form">
+          <label>Current Password<input id="currentPassword" type="password" autocomplete="current-password" required></label>
+          <label>New Password<input id="newPassword" type="password" autocomplete="new-password" required></label>
+          <button type="submit">Change Password</button>
+        </form>
+      </div>
+      <div>
+        <h2>Create Admin</h2>
+        <form id="adminForm" class="admin-form">
+          <label>Username<input id="adminUsername" autocomplete="username" required></label>
+          <label>Password<input id="adminPassword" type="password" autocomplete="new-password" required></label>
+          <button type="submit">Create Admin</button>
+        </form>
+        <p id="adminMessage" class="form-message"></p>
+        <div class="table-wrap"><table id="adminUsersTable"></table></div>
+      </div>
     </section>
 
     <section class="split">

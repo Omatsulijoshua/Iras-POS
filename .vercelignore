@@ -1,0 +1,10 @@
+POSales/
+database/
+installer-build/
+installer-build-compiled/
+installer-build-logo/
+installer-build-simple/
+sqlite-package-loader/
+cropped_logo_base64.txt
+new_circular_logo_base64.txt
+node_modules/

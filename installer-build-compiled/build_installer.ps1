@@ -1,24 +1,35 @@
 $ErrorActionPreference = "Stop"
 
-# Define paths
-$installerDir = "C:\Users\USER\source\repos\POSales\installer-build-compiled"
+# Define paths relative to this script directory
+$installerDir = $PSScriptRoot
+$repoRoot = Split-Path -Parent $installerDir
 $buildOutputDir = Join-Path $installerDir "build_output"
 $tempPayloadDir = Join-Path $installerDir "payload_temp"
 $zipPath = Join-Path $installerDir "app.zip"
-$icoPath = "C:\Users\USER\source\repos\POSales\POSales\POSales\Resources\app_logo.ico"
+$icoPath = "$repoRoot\POSales\POSales\Resources\app_logo.ico"
 $tempIcoPath = Join-Path $installerDir "app_logo.ico"
 $setupExePath = Join-Path $installerDir "IRAS_SPOT_POS_Setup.exe"
-$downloadsDir = "C:\Users\USER\Downloads"
+
+# Resolve user's Downloads directory dynamically
+$downloadsDir = Join-Path ([System.Environment]::GetFolderPath("UserProfile")) "Downloads"
 $targetSetupPath = Join-Path $downloadsDir "IRAS_SPOT_POS_Setup.exe"
 
 # Rebuild C# project first to ensure the installer has the latest code
 Write-Host "Building C# project in Debug configuration..."
-$projectPath = "C:\Users\USER\source\repos\POSales\POSales\POSales\POSales.csproj"
-$msbuildPath = "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+$projectPath = "$repoRoot\POSales\POSales\POSales.csproj"
+
+# MSBuild Paths check
+$msbuildPath = "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
+if (-not (Test-Path $msbuildPath)) {
+    $msbuildPath = "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe"
+}
+
 if (Test-Path $msbuildPath) {
-    & $msbuildPath $projectPath /t:Build /p:Configuration=Debug /p:OutDir="$buildOutputDir\"
+    Write-Host "Using MSBuild at: $msbuildPath"
+    & $msbuildPath $projectPath /t:Build /p:Configuration=Debug /p:OutDir="$buildOutputDir" /p:FrameworkPathOverride="C:\Windows\Microsoft.NET\Framework64\v4.0.30319"
 } else {
-    dotnet build $projectPath -c Debug -p:OutDir="$buildOutputDir\"
+    Write-Host "MSBuild not found at default paths, trying dotnet build..."
+    dotnet build $projectPath -c Debug -p:OutDir="$buildOutputDir"
 }
 
 # Cleanup from previous runs
@@ -49,14 +60,14 @@ Write-Host "Compiling setup installer with csc.exe..."
 $cscPath = "C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 $arguments = @(
     "/target:winexe",
-    "/out:$setupExePath",
+    "/out:`"$setupExePath`"",
     "/reference:System.Windows.Forms.dll",
     "/reference:System.Drawing.dll",
     "/reference:System.IO.Compression.dll",
     "/reference:System.IO.Compression.FileSystem.dll",
-    "/resource:$zipPath,app.zip",
-    "/win32icon:$tempIcoPath",
-    (Join-Path $installerDir "Setup.cs")
+    "/resource:`"$zipPath`",app.zip",
+    "/win32icon:`"$tempIcoPath`"",
+    "`"$(Join-Path $installerDir "Setup.cs")`""
 )
 
 # Run compiler

@@ -1,6 +1,43 @@
 const express = require("express");
 const fs = require("fs");
 const path = require("path");
+const { Pool } = require("pg");
+
+let pool;
+if (process.env.DATABASE_URL) {
+  console.log("PostgreSQL database URL configured. Setting up connections...");
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+
+  initDatabase().catch(err => console.error("Failed to initialize PostgreSQL database:", err));
+}
+
+async function initDatabase() {
+  const client = await pool.connect();
+  try {
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS posales_reports (
+        id INT PRIMARY KEY,
+        data JSONB NOT NULL
+      );
+    `);
+    
+    const res = await client.query("SELECT id FROM posales_reports WHERE id = 1");
+    if (res.rows.length === 0) {
+      await client.query(
+        "INSERT INTO posales_reports (id, data) VALUES (1, $1)",
+        [JSON.stringify({ snapshots: [], users: [{ username: "admin", password: "admin" }] })]
+      );
+      console.log("Initialized PostgreSQL table with default admin user.");
+    }
+  } finally {
+    client.release();
+  }
+}
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -11,11 +48,86 @@ const dataFile = process.env.DATA_FILE || path.join(process.env.VERCEL ? "/tmp" 
 app.use(express.json({ limit: "25mb" }));
 app.use(express.urlencoded({ extended: false }));
 
+const RENDER_BACKEND_URL = process.env.RENDER_BACKEND_URL;
+
+if (RENDER_BACKEND_URL) {
+  console.log(`Configured to proxy API requests to Render backend: ${RENDER_BACKEND_URL}`);
+  
+  const proxyToRender = async (req, res) => {
+    try {
+      const targetUrl = RENDER_BACKEND_URL.replace(/\/$/, "") + req.originalUrl;
+      const headers = {};
+      for (const [key, value] of Object.entries(req.headers)) {
+        const lowerKey = key.toLowerCase();
+        if (lowerKey !== "host" && lowerKey !== "content-length" && lowerKey !== "connection") {
+          headers[key] = value;
+        }
+      }
+      
+      const fetchOptions = {
+        method: req.method,
+        headers: headers,
+        redirect: "manual"
+      };
+
+      if (req.method !== "GET" && req.method !== "HEAD" && req.body) {
+        const contentType = req.headers["content-type"] || "";
+        if (contentType.includes("application/json")) {
+          fetchOptions.body = JSON.stringify(req.body);
+        } else if (contentType.includes("application/x-www-form-urlencoded")) {
+          fetchOptions.body = new URLSearchParams(req.body).toString();
+        } else {
+          fetchOptions.body = typeof req.body === "string" ? req.body : JSON.stringify(req.body);
+        }
+      }
+
+      const response = await fetch(targetUrl, fetchOptions);
+      
+      response.headers.forEach((value, key) => {
+        const lowerKey = key.toLowerCase();
+        if (
+          lowerKey !== "content-encoding" &&
+          lowerKey !== "transfer-encoding" &&
+          lowerKey !== "connection" &&
+          lowerKey !== "content-length"
+        ) {
+          res.setHeader(key, value);
+        }
+      });
+      
+      res.status(response.status);
+      const buffer = await response.arrayBuffer();
+      res.send(Buffer.from(buffer));
+    } catch (error) {
+      console.error("Proxy to Render error:", error);
+      res.status(502).json({ ok: false, error: "Bad Gateway: Failed to connect to Render backend." });
+    }
+  };
+
+  app.post("/login", proxyToRender);
+  app.post("/logout", proxyToRender);
+  app.use("/api", proxyToRender);
+}
+
 function ensureDataDir() {
   fs.mkdirSync(path.dirname(dataFile), { recursive: true });
 }
 
 async function readData() {
+  if (pool) {
+    try {
+      const res = await pool.query("SELECT data FROM posales_reports WHERE id = 1");
+      if (res.rows.length > 0) {
+        const parsed = res.rows[0].data;
+        if (!Array.isArray(parsed.snapshots)) parsed.snapshots = [];
+        if (!Array.isArray(parsed.users) || parsed.users.length === 0) parsed.users = [{ username, password }];
+        return parsed;
+      }
+    } catch (e) {
+      console.error("Failed to read from PostgreSQL:", e);
+    }
+  }
+
   const url = process.env.KV_REST_API_URL;
   const token = process.env.KV_REST_API_TOKEN;
   
@@ -50,6 +162,18 @@ async function readData() {
 }
 
 async function writeData(data) {
+  if (pool) {
+    try {
+      await pool.query(
+        "INSERT INTO posales_reports (id, data) VALUES (1, $1) ON CONFLICT (id) DO UPDATE SET data = EXCLUDED.data",
+        [JSON.stringify(data)]
+      );
+      return;
+    } catch (e) {
+      console.error("Failed to write to PostgreSQL:", e);
+    }
+  }
+
   const url = process.env.KV_REST_API_URL;
   const token = process.env.KV_REST_API_TOKEN;
 
@@ -89,6 +213,20 @@ function authToken(user) {
 
 async function currentUser(req) {
   const cookies = parseCookies(req);
+  const token = cookies.posales_auth;
+  if (!token) return null;
+
+  if (process.env.RENDER_BACKEND_URL) {
+    try {
+      const decoded = Buffer.from(token, "base64").toString("utf8");
+      if (decoded && decoded.includes(":")) {
+        return { username: decoded.split(":")[0] };
+      }
+    } catch {
+      return null;
+    }
+  }
+
   const data = await readData();
   return data.users.find((user) => cookies.posales_auth === authToken(user));
 }

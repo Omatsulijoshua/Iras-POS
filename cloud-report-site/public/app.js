@@ -191,6 +191,10 @@ function filterRowsWithoutDates(rows) {
 
 async function loadReports() {
   const response = await fetch("/api/reports");
+  if (response.status === 401) {
+    window.location.href = "/login";
+    return;
+  }
   latestReport = await response.json();
   populateSystems(latestReport);
   populateCashiers(latestReport);
@@ -213,6 +217,10 @@ document.getElementById("clearFilters").addEventListener("click", () => {
 
 async function loadAdminUsers() {
   const response = await fetch("/api/admin/users");
+  if (response.status === 401) {
+    window.location.href = "/login";
+    return;
+  }
   if (!response.ok) return;
   const data = await response.json();
   renderTable("adminUsersTable", data.users || [], ["username"]);
@@ -224,6 +232,10 @@ async function postJson(url, payload) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload)
   });
+  if (response.status === 401) {
+    window.location.href = "/login";
+    return;
+  }
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data.ok === false) throw new Error(data.error || "Request failed.");
   return data;

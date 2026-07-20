@@ -1,0 +1,13 @@
+services:
+  - type: web
+    name: iras-pos-backend
+    env: node
+    plan: free
+    rootDir: cloud-report-site
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 18.0.0
+      - key: DATABASE_URL
+        sync: false
